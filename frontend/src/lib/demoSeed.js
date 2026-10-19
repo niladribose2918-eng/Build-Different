@@ -4,6 +4,7 @@ import { isoOf, uid } from './format.js'
 import { starterRoutines } from './starter.js'
 import { modeOf } from './history.js'
 import { emptyMeasurement } from './measurements.js'
+import { defaultNutrition } from './nutrition-targets.js'
 
 // Starting weight and weekly increment per exercise of the starter plan (kg).
 // Chest dips are body-weight only here, so they log reps at 0 added weight.
@@ -40,6 +41,47 @@ const UNRATED = 0.1                    // …plus this share of the remaining se
 const RPE_UNTIL = 3
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v))
 
+// --- Nutrition --------------------------------------------------------------------------
+// Twelve weeks of food logged against the weight trend above, so Nutrition opens on a real day
+// and the weekly check-in has something to learn from: about 2,350 kcal a day against a
+// maintenance near 2,730 is the 0.34 kg a week the weigh-ins fall by. Each food carries the food
+// list's own numbers (lib/foods-data.js), copied in the way a logged entry keeps them, so the
+// demo does not pull that half-megabyte chunk in.
+//   key: [food key, portion, grams, kcal, protein, carbs, fat, fibre per 100 g]
+const FOOD = {
+  poha: ['in:poha', 'plate', 160, 164, 3.2, 24.8, 5.8, 1.2], chai: ['in:masala-chai', 'cup', 150, 46, 1.3, 7.4, 1.3, 0],
+  oats: ['u:08120', 'half cup', 40, 379, 13.2, 67.7, 6.5, 10.1], milk: ['u:01077', 'glass', 250, 61, 3.2, 4.8, 3.3, 0],
+  banana: ['u:09040', 'medium', 118, 89, 1.1, 22.8, 0.3, 2.6], egg: ['u:01129', 'egg', 50, 155, 12.6, 1.1, 10.6, 0],
+  bread: ['u:18075', 'slice', 32, 252, 12.5, 42.7, 3.5, 6], idli: ['in:idli', 'idli', 40, 144, 4.7, 29.9, 0.4, 2.2],
+  sambar: ['in:sambar', 'katori', 150, 46, 2, 7.5, 1.2, 1.8], coffee: ['in:filter-coffee', 'cup', 150, 62, 2.1, 8.5, 2.2, 0],
+  chicken: ['u:05064', 'serving', 120, 165, 31, 0, 3.6, 0], jeera: ['in:jeera-rice', 'katori', 150, 145, 2.4, 26.7, 2.9, 0.4],
+  toor: ['in:toor-dal', 'katori', 150, 85, 4.2, 12.8, 2.1, 3], salad: ['in:kachumber', 'katori', 150, 21, 0.8, 4.9, 0.1, 0.9],
+  rajma: ['in:rajma', 'katori', 150, 89, 4.1, 12.7, 2.7, 3], rice: ['u:20045', 'katori', 150, 130, 2.7, 28.2, 0.3, 0.4],
+  curd: ['u:01116', 'katori', 150, 61, 3.5, 4.7, 3.3, 0], roti: ['in:roti', 'roti', 40, 255, 9.9, 54, 1.9, 8],
+  bhurji: ['in:paneer-bhurji', 'katori', 150, 219, 10.9, 4.6, 17.7, 0.7], raita: ['in:raita', 'katori', 150, 50, 2.8, 4.4, 2.5, 0.1],
+  greek: ['u:01256', 'container', 170, 59, 10.2, 3.6, 0.4, 0], whey: ['u:14066', 'scoop', 30, 352, 78.1, 6.3, 1.6, 3.1],
+  apple: ['u:09003', 'medium', 182, 52, 0.3, 13.8, 0.2, 2.4], almonds: ['u:12061', 'handful', 28, 579, 21.2, 21.6, 49.9, 12.5],
+  sprouts: ['in:sprouts-salad', 'katori', 150, 29, 2.5, 6, 0.2, 1.7], curry: ['in:chicken-curry', 'katori', 150, 133, 15, 3.6, 6.3, 0.6],
+  palak: ['in:palak-paneer', 'katori', 150, 131, 7, 4.4, 10.1, 1.7], moong: ['in:moong-dal', 'katori', 150, 80, 4.5, 12.4, 1.7, 3.2],
+  eggCurry: ['in:egg-curry', 'katori', 150, 133, 8, 3.2, 9.8, 0.6], fish: ['in:fish-curry', 'katori', 150, 140, 13.2, 1.7, 8.7, 0.4],
+  pb: ['u:16098', 'tbsp', 16, 598, 22.2, 22.3, 51.4, 5], samosa: ['in:samosa', 'samosa', 90, 298, 4.4, 32.2, 17, 2.4],
+  jamun: ['in:gulab-jamun', 'piece', 30, 401, 5, 59.3, 16.7, 0.2], paratha: ['in:aloo-paratha', 'paratha', 125, 233, 6.4, 37.9, 7.5, 3.3],
+}
+// Each meal is a few [food, how many] picks; one is drawn per meal per day.
+const MEALS = [
+  [[['poha', 1.5], ['chai', 1], ['egg', 2]], [['oats', 2], ['milk', 1], ['banana', 1]], [['egg', 3], ['bread', 2], ['chai', 1]], [['idli', 4], ['sambar', 1], ['coffee', 1]], [['paratha', 2], ['curd', 1]]],
+  [[['chicken', 1.5], ['jeera', 1.5], ['toor', 1], ['salad', 1]], [['rajma', 1.5], ['rice', 2], ['curd', 1]], [['roti', 4], ['bhurji', 1], ['raita', 1]]],
+  [[['greek', 1], ['banana', 1]], [['whey', 1], ['apple', 1]], [['almonds', 1], ['sprouts', 1]], [['whey', 1], ['milk', 1]], [['bread', 2], ['pb', 1]]],
+  [[['roti', 3], ['curry', 1.5], ['salad', 1]], [['palak', 1], ['roti', 3], ['moong', 1]], [['eggCurry', 1.5], ['rice', 1.5], ['raita', 1]], [['fish', 1.5], ['rice', 2]]],
+]
+const MEAL_HOURS = [8, 13, 17, 21]
+const r1 = v => Math.round(v * 10) / 10
+function foodLogged(name, count, d, m) {
+  const [f, s, g1, k, p, c, fa, fb] = FOOD[name]
+  const g = g1 * count, x = g / 100
+  return { d, m, f, g: r1(g), s, x: count, k: Math.round(k * x), p: r1(p * x), c: r1(c * x), fa: r1(fa * x), ...(fb ? { fb: r1(fb * x) } : {}) }
+}
+
 // Deterministic PRNG — the demo should look the same on every visit and in screenshots.
 function rng(seed) {
   let a = seed >>> 0
@@ -75,6 +117,9 @@ export function buildDemoState() {
   const today = new Date(); today.setHours(12, 0, 0, 0)
   const start = new Date(today); start.setDate(start.getDate() - WEEKS * 7)
 
+  // Food draws from a generator of its own too (see mrnd above).
+  const frnd = rng(20260725)
+  const foodLog = {}, foodDays = {}
   const workouts = []
   const bodyweight = []
   const measurements = []
@@ -113,6 +158,24 @@ export function buildDemoState() {
       e.calfRight = Math.round((38.5 + p * 0.3) * 10) / 10
       e.bodyFat = Math.round((20.4 - p * 3.8 + (mrnd() - 0.5) * 0.3) * 10) / 10
       measurements.push(e)
+    }
+
+    // Food: most days logged in full and marked complete; now and then a day half logged, or
+    // not at all; Sundays with a treat. Today stops at the meals already behind us.
+    {
+      const isToday = iso === isoOf(today)
+      const skip = !isToday && frnd() < 0.05
+      const partial = !isToday && !skip && frnd() < 0.08
+      let n = 0
+      if (!skip) MEALS.forEach((options, m) => {
+        const pick = options[Math.floor(frnd() * options.length)]
+        if ((isToday && nowH < MEAL_HOURS[m] + 1) || (partial && m >= 2)) return
+        for (const [name, count] of pick) foodLog[`demo-${iso}-${String(n++).padStart(2, '0')}`] = { ...foodLogged(name, count, iso, m), _ts: at(day, MEAL_HOURS[m], 10) }
+        // after a Mon/Wed/Fri session, a shake and a banana
+        if (m === 2 && [1, 3, 5].includes(day.getDay())) for (const name of ['whey', 'banana']) foodLog[`demo-${iso}-${String(n++).padStart(2, '0')}`] = { ...foodLogged(name, 1, iso, m), _ts: at(day, 19, 30) }
+        if (m === 2 && day.getDay() === 0) foodLog[`demo-${iso}-${String(n++).padStart(2, '0')}`] = { ...foodLogged(frnd() < 0.5 ? 'samosa' : 'jamun', 1, iso, m), _ts: at(day, MEAL_HOURS[m], 20) }
+      })
+      if (!skip && !partial && !isToday) foodDays[iso] = { done: true, _ts: at(day, 22, 0) }
     }
 
     const routine = byWeekday[day.getDay()]
@@ -184,6 +247,10 @@ export function buildDemoState() {
     dayPlan,
     workouts, bodyweight, measurements, exWeights,
     targetW: TARGET_W,
+    // Nutrition set up the way the plan's worked example is: 178 cm, born 1994, moderately
+    // active, following the body-weight goal (lose) at 0.5% a week.
+    nutrition: { ...defaultNutrition(), sex: 'male', birthYear: 1994, heightCm: 178, activity: 'moderate', pace: 0.5 },
+    foodLog, foodDays, showNutritionCard: true,
     // The history is rated, so the demo turns the column on and the stats get a scale to
     // label their aggregates with instead of guessing one (see displayScale).
     effort: 'rir'
