@@ -14,6 +14,9 @@ import { dayTotals, entriesOn } from '../lib/food-log.js'
 
 const navSpy = vi.fn()
 const route = vi.hoisted(() => ({ state: null }))
+// the barcode lookup's HTTP goes through this wrapper; tests answer it, nothing goes out
+const net = vi.hoisted(() => ({ fetch: null }))
+vi.mock('../lib/capacitor-fetch.js', () => ({ nativeFetch: (...a) => net.fetch(...a) }))
 vi.mock('react-router-dom', () => ({ useNavigate: () => navSpy, useLocation: () => ({ state: route.state }) }))
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -329,5 +332,43 @@ describe('Meal plan', () => {
     useStore.setState({ S: { ...S, unit: 'kg', foodLog } })
     const host = mount(<NutritionCard />)
     expect(host.querySelector('[data-next-planned]').textContent).toMatch(/Next: /)
+  })
+})
+
+describe('Barcode lookup', () => {
+  const NUTELLA = { code: '3017620422003', status: 1, product: { product_name: 'Nutella', brands: 'Ferrero', serving_quantity: 15, nutriments: { 'energy-kcal_100g': 539, proteins_100g: 6.3, carbohydrates_100g: 57.5, fat_100g: 30.9 } } }
+
+  it('stays out of sight until switched on in settings', async () => {
+    const host = mount(<Nutrition />)
+    await settle()
+    act(() => host.querySelector('[data-meal="3"] [aria-label="Add food"]').click())
+    expect(button(topSheet(), 'Barcode')).toBeUndefined()
+  })
+
+  it('looks a typed barcode up, confirms the label, logs it and remembers it', async () => {
+    const S = buildDemoState()
+    useStore.setState({ S: { ...S, unit: 'kg', nutrition: { ...S.nutrition, barcode: true } } })
+    const fx = vi.fn(async () => ({ ok: true, status: 200, json: async () => NUTELLA }))
+    net.fetch = fx
+    const host = mount(<Nutrition />)
+    await settle()
+    act(() => host.querySelector('[data-meal="3"] [aria-label="Add food"]').click())
+    const sheet = topSheet()
+    await settle()
+    act(() => button(sheet, 'Barcode').click())
+    type(sheet.querySelector('[aria-label="Barcode number"]'), '3017620422004')
+    await act(async () => { button(sheet, 'Look up').click() })
+    expect(sheet.querySelector('[data-barcode-error="invalid"]')).toBeTruthy()
+    type(sheet.querySelector('[aria-label="Barcode number"]'), '3017620422003')
+    await act(async () => { button(sheet, 'Look up').click(); await new Promise(r => setTimeout(r, 0)) })
+    expect(fx).toHaveBeenCalledTimes(1)
+    const found = sheet.querySelector('[data-barcode-food="3017620422003"]')
+    expect(found.textContent).toContain('Nutella')
+    expect(sheet.textContent).toContain('Data from Open Food Facts (ODbL)')
+    act(() => button(found, 'Use this food').click())
+    act(() => button(sheet, 'Add').click())
+    const after = useStore.getState().S
+    expect(after.foodsSeen['3017620422003']).toMatchObject({ name: 'Nutella', kcal: 539 })
+    expect(entriesOn(after, todayISO()).some(e => e.f === 'b:3017620422003' && e.g === 15)).toBe(true)
   })
 })

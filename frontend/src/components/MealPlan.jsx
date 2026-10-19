@@ -6,6 +6,7 @@ import { t } from '../lib/i18n.js'
 import { computeTargets } from '../lib/nutrition-targets.js'
 import { mealsOf, entriesOn, amountOf } from '../lib/food-log.js'
 import { loadFoods, foodLookup } from '../lib/foods.js'
+import { seenFoods } from '../lib/barcode-food.js'
 import {
   plansOf, defaultPlanId, planOn, mealsOfPlanDay, plannedTotals, itemNutrients, itemOf, withPlan, withoutPlan,
   withMealDay, withPlanMeal, planFromWeek, addDays,
@@ -41,7 +42,8 @@ const SECTION = {
 export function useFoodsLookup(S) {
   const [foods, setFoods] = useState(null)
   useEffect(() => { let live = true; loadFoods().then(f => { if (live) setFoods(f) }, () => {}); return () => { live = false } }, [])
-  return { foods, lookup: useMemo(() => foodLookup(foods), [foods]) }
+  const seen = useMemo(() => seenFoods(S), [S.foodsSeen])
+  return { foods, lookup: useMemo(() => foodLookup(foods, seen), [foods, seen]) }
 }
 
 const dayName = key => (key === 'all' ? t('Every day') : t(DAYN[Number(key)]))

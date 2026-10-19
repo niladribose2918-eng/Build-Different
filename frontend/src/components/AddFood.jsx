@@ -1,9 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
 import { fmtNum, todayISO } from '../lib/format.js'
 import { t } from '../lib/i18n.js'
 import { loadFoods, iconOf, foodLookup } from '../lib/foods.js'
+import { seenFoods, withSeen, lookupBarcode, validBarcode, cleanBarcode, ATTRIBUTION } from '../lib/barcode-food.js'
+import { MOBILE } from '../lib/mobile.js'
+import CameraScan from './CameraScan.jsx'
 import { searchFoods } from '../lib/food-search.js'
 import {
   foodEntry, quickEntry, withEntry, withoutEntry, recentFoods, mealsOf, nutrientsFor, savedMealsOf, logSavedMeal, QUICK,
@@ -143,9 +146,12 @@ function AddFood({ d, meal: meal0, close, onPick, title }) {
   const [tab, setTab] = useState('recent')
   const [picked, setPicked] = useState(null)
   const [limit, setLimit] = useState(PAGE)
+  const [scanning, setScanning] = useState(false)
   const recent = useMemo(() => recentFoods(S, { today: todayISO() }), [S.foodLog])
-  const all = useMemo(() => (foods ? foods.list : []), [foods])
-  const lookup = useMemo(() => foodLookup(foods), [foods])
+  // packaged foods looked up by barcode before are searched with the rest, first
+  const seen = useMemo(() => seenFoods(S), [S.foodsSeen])
+  const all = useMemo(() => (foods ? [...seen, ...foods.list] : seen), [foods, seen])
+  const lookup = useMemo(() => foodLookup(foods, seen), [foods, seen])
   const results = useMemo(() => (foods && q.trim() ? searchFoods(all, q, { recent, limit: 200 }) : []), [foods, all, q, recent])
   const browse = useMemo(() => {
     if (!foods) return []
@@ -164,10 +170,12 @@ function AddFood({ d, meal: meal0, close, onPick, title }) {
   }
 
   if (picked) return <FoodAmount food={picked} meals={meals} meal={meal0} hideCalories={hide} onSave={add} onBack={() => setPicked(null)} />
+  if (scanning) return <BarcodeLookup S={S} onFood={f => { update(s => { s.foodsSeen = withSeen(s.foodsSeen, f) }); setScanning(false); setPicked(f) }} onBack={() => setScanning(false)} />
 
   const list = q.trim() ? results : browse
   return <div className="nt-add">
     <h3>{where}</h3>
+    {S.nutrition?.barcode && <Button size="sm" variant="tinted" icon="camera" className="nt-barcode-btn" onClick={() => setScanning(true)}>{t('Barcode')}</Button>}
     <SearchField value={q} onChange={e => { setQ(e.target.value); setLimit(PAGE) }} onClear={() => setQ('')} placeholder={t('Search foods and dishes')} aria-label={t('Search foods and dishes')} />
     {!q.trim() && <Segmented className="nt-tabs" value={tab} onChange={setTab}
       options={[{ value: 'recent', label: recent.size ? t('Recent') : t('Common') }, { value: 'saved', label: t('Saved meals') }, { value: 'quick', label: t('Quick add') }]} />}
@@ -202,6 +210,79 @@ export function addFoodSheet({ d = todayISO(), meal = 0, onPick = null, title = 
   return useUI.getState().openSheet(close => <AddFood d={d} meal={meal} close={close} onPick={onPick} title={title} />)
 }
 
+// A packaged food by its barcode (lib/barcode-food.js): typed, or scanned where this device can.
+// One remembered before comes straight back, offline too.
+const REASON = {
+  invalid: () => t('That number does not look like a barcode. Check the digits.'),
+  notFound: () => t('Not in Open Food Facts yet. Log it with Quick add, from the label.'),
+  noNutrients: () => t('Open Food Facts has no nutrition values for it yet. Use Quick add, from the label.'),
+  bad: () => t('The values for this product look wrong there. Use Quick add, from the label.'),
+  busy: () => t('Open Food Facts is busy. Try again in a minute.'),
+  network: () => t('Could not reach Open Food Facts. Check your connection, or use Quick add.'),
+}
+function BarcodeLookup({ S, onFood, onBack }) {
+  const [code, setCode] = useState('')
+  const [state, setState] = useState({ busy: false, reason: null, food: null })
+  const [camera, setCamera] = useState(false)
+  const [canCamera, setCanCamera] = useState(MOBILE)
+  useEffect(() => {
+    if (MOBILE) return
+    let live = true
+    import('../lib/scan-web.js').then(m => m.productScanSupported()).then(ok => { if (live) setCanCamera(ok) }, () => {})
+    return () => { live = false }
+  }, [])
+  const find = async raw => {
+    const c = cleanBarcode(raw)
+    setCode(c)
+    const known = seenFoods(S).find(f => f.barcode === c)
+    if (known) { setState({ busy: false, reason: null, food: known }); return }
+    if (!validBarcode(c)) { setState({ busy: false, reason: 'invalid', food: null }); return }
+    setState({ busy: true, reason: null, food: null })
+    const r = await lookupBarcode(c)
+    setState({ busy: false, reason: r.ok ? null : r.reason, food: r.ok ? r.food : null })
+  }
+  const scan = async () => {
+    if (MOBILE) {
+      try { const hit = await (await import('../lib/scan.js')).scanCode(); if (hit?.value) find(hit.value) } catch { setState(s => ({ ...s, reason: 'network' })) }
+      return
+    }
+    setCamera(true)
+  }
+  const found = useCallback(hit => { setCamera(false); if (hit?.value) find(hit.value) }, [S])
+  const [decoder, setDecoder] = useState(null)
+  useEffect(() => { if (camera && !decoder) import('../lib/scan-web.js').then(m => setDecoder(() => m.decodeProductSource)) }, [camera, decoder])
+  if (camera && decoder) return <CameraScan onFound={found} onCancel={() => setCamera(false)} decode={decoder} prompt={t('Point the camera at the barcode')} />
+
+  const f = state.food
+  return <div className="nt-barcode" data-barcode>
+    <h3>{t('Barcode')}</h3>
+    <div className="row" style={{ gap: 8, alignItems: 'stretch' }}>
+      <TextField value={code} inputMode="numeric" placeholder={t('Barcode number')} aria-label={t('Barcode number')}
+        onChange={e => setCode(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') find(code) }} />
+      <Button onClick={() => find(code)} disabled={!cleanBarcode(code) || state.busy}>{t('Look up')}</Button>
+    </div>
+    {canCamera && <><div style={{ height: 8 }} /><Button variant="tinted" icon="camera" onClick={scan}>{t('Scan')}</Button></>}
+    {state.busy && <div className="empty small">{t('Looking it up…')}</div>}
+    {state.reason && <div className="small muted" style={{ marginTop: 12 }} data-barcode-error={state.reason}>{REASON[state.reason]()}</div>}
+    {f && <div className="card" style={{ marginTop: 12 }} data-barcode-food={f.barcode}>
+      <div className="tt">{f.name}</div>
+      {f.brand && <div className="small dim">{f.brand}</div>}
+      <div className="small muted" style={{ margin: '8px 0 4px' }}>{t('Per 100 g')}</div>
+      <div className="nt-facts">
+        <div><b>{fmtNum(f.kcal)}</b><span>{t('kcal')}</span></div>
+        <div><b>{fmtNum(f.p)}</b><span>{t('protein')}</span></div>
+        <div><b>{fmtNum(f.c)}</b><span>{t('carbs')}</span></div>
+        <div><b>{fmtNum(f.f)}</b><span>{t('fat')}</span></div>
+        <div><b>{fmtNum(f.fib)}</b><span>{t('fibre')}</span></div>
+      </div>
+      <div className="small dim" style={{ marginBottom: 10 }}>{t('Check these against the label: community data can be wrong.')}</div>
+      <Button variant="primary" onClick={() => onFood(f)}>{t('Use this food')}</Button>
+    </div>}
+    <div className="small dim" style={{ marginTop: 10 }}>{t(ATTRIBUTION)}</div>
+    <div style={{ height: 8 }} />
+    <Button variant="ghost" className="dim" onClick={onBack}>{t('Back')}</Button>
+  </div>
+}
 
 // Changing or removing an entry already logged.
 function EditEntry({ id, close }) {
@@ -217,7 +298,7 @@ function EditEntry({ id, close }) {
   const remove = () => { update(s => { s.foodLog = withoutEntry(s.foodLog, id) }); toast(t('Removed')); close() }
   if (e.f === QUICK) return <><h3>{e.n || t('Quick add')}</h3><QuickAdd start={e} meals={meals} meal={e.m || 0} onSave={save} onBack={close} onDelete={remove} /></>
   if (!foods && !failed) return <div className="empty small">{t('Loading foods…')}</div>
-  const food = foodLookup(foods)(e.f)
+  const food = foodLookup(foods, seenFoods(S))(e.f)
   // A food no longer in the list keeps its numbers; it can still move meals or go.
   if (!food) return <>
     <h3>{t('Logged food')}</h3>

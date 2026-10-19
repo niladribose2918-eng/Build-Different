@@ -2249,5 +2249,6 @@ button.wl-summary{width:100%;padding:0 0 10px;text-align:start;border-radius:var
 .gr-row:first-of-type{border-top:0}
 .gr-row .grow{flex:1;min-width:0}
 .gr-done{text-decoration:line-through;color:var(--label-3)}
+.nt-barcode-btn{float:inline-end;margin-top:-34px}
 .mp-opts{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}
 .mp-opts>.seg{flex:1 0 100%}

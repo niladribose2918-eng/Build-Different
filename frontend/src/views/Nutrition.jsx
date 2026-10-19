@@ -7,6 +7,7 @@ import { t } from '../lib/i18n.js'
 import { computeTargets } from '../lib/nutrition-targets.js'
 import { byMeal, dayTotals, amountOf, copyMeal, dayDone, withDayDone, withSavedMeal, QUICK } from '../lib/food-log.js'
 import { loadFoods, foodLookup } from '../lib/foods.js'
+import { seenFoods } from '../lib/barcode-food.js'
 import { plannedOn, logPlanned, itemsLine } from '../lib/meal-plan.js'
 import { tappable } from '../lib/use-sheet-keyboard.js'
 import Icon from '../components/Icon.jsx'
@@ -120,7 +121,7 @@ export default function Nutrition() {
   const before = byMeal(S, shift(d, -1))
   const totals = dayTotals(S, d)
   const done = dayDone(S, d)
-  const lookup = foodLookup(foods)
+  const lookup = foodLookup(foods, seenFoods(S))
   const planned = plannedOn(S, d)
 
   return <div className="narrow">

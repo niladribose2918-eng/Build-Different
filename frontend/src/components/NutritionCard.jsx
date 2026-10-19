@@ -8,6 +8,7 @@ import { dayTotals } from '../lib/food-log.js'
 import { checkinFor } from '../lib/adaptive-tdee.js'
 import { nextPlannedMeal, logPlanned, itemsLine } from '../lib/meal-plan.js'
 import { loadFoods, foodLookup } from '../lib/foods.js'
+import { seenFoods } from '../lib/barcode-food.js'
 import { mealLabel } from './NutritionSetup.jsx'
 import Icon from './Icon.jsx'
 import MacroSummary from './MacroSummary.jsx'
@@ -47,7 +48,7 @@ export default function NutritionCard() {
   const logNext = async () => {
     const foods = await loadFoods().catch(() => null)
     if (!foods) { useUI.getState().toast(t('The food list could not load. Try again.')); return }
-    const lookup = foodLookup(foods)
+    const lookup = foodLookup(foods, seenFoods(S))
     update(s => { s.foodLog = logPlanned(s.foodLog, s, todayISO(), next.meal, lookup) })
     useUI.getState().toast(t('Logged as planned'))
   }

@@ -81,3 +81,25 @@ export async function importCodeFromImageWeb(file) {
   }
   try { return await decodeSource(bmp) } finally { if (bmp.close) bmp.close() }
 }
+
+// Product barcodes (EAN/UPC) for Nutrition's barcode lookup, from the browser's own detector
+// only: jsQR reads QR codes, and a barcode library would be a new dependency. Chrome on Android
+// has the detector; where it is missing (iPhone Safari) the number is typed instead.
+const PRODUCT_FORMATS = ['ean_13', 'ean_8', 'upc_a', 'upc_e']
+let _product = null
+export async function productScanSupported() {
+  try {
+    if (typeof BarcodeDetector !== 'function') return false
+    const have = typeof BarcodeDetector.getSupportedFormats === 'function' ? await BarcodeDetector.getSupportedFormats() : []
+    return PRODUCT_FORMATS.some(f => have.includes(f))
+  } catch { return false }
+}
+export async function decodeProductSource(source) {
+  if (_product === null) {
+    try { _product = typeof BarcodeDetector === 'function' ? new BarcodeDetector({ formats: PRODUCT_FORMATS }) : false } catch { _product = false }
+  }
+  if (!_product) return null
+  const found = await _product.detect(source)
+  const b = found && found.find(x => x.rawValue)
+  return b ? { value: b.rawValue, fmt: b.format } : null
+}

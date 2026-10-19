@@ -185,6 +185,13 @@ function NutritionSetup({ close, first }) {
         <Switch checked={!!n.hideCalories} onChange={v => set({ hideCalories: v })} />
       </div>
       <div className="lrow">
+        <span className="lrow-m"><span className="lrow-t">{t('Barcode lookup')}</span>
+          <span className="lrow-s">{n.barcode
+            ? t('On: a barcode you scan or type is sent to openfoodfacts.org to fetch its label. Nothing else is sent. Data from Open Food Facts (ODbL).')
+            : t('Off. When on, a barcode you scan or type is sent to openfoodfacts.org to fetch its label, and nothing else is.')}</span></span>
+        <Switch checked={!!n.barcode} onChange={v => set({ barcode: v })} />
+      </div>
+      <div className="lrow">
         <span className="lrow-m"><span className="lrow-t">{t('Tips')}</span><span className="lrow-s">{t('Protein around training days, protein on the finish screen, and a fibre nudge.')}</span></span>
         <Switch checked={n.tips !== false} onChange={v => set({ tips: v })} />
       </div>
