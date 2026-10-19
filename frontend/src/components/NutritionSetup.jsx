@@ -5,8 +5,9 @@ import { fmtNum, fmtPlate } from '../lib/format.js'
 import { t } from '../lib/i18n.js'
 import {
   ACTIVITY, PACES, PROTEIN_RANGE, FAT_RANGE, MAX_MEALS, computeTargets, defaultNutrition, goalDirection, goalOf,
-  defaultProtein, proteinPerUnit, bodyKg,
+  defaultProtein, proteinPerUnit,
 } from '../lib/nutrition-targets.js'
+import { weightForTargets } from '../lib/weight-trend.js'
 import { bwSheet } from '../sheets.jsx'
 import Icon from './Icon.jsx'
 import { Button, NumberField, Section, Segmented, SelectRow, Stepper, Switch, TextField } from './ui.jsx'
@@ -56,7 +57,8 @@ function NutritionSetup({ close, first }) {
   const set = patch => setN(v => ({ ...v, ...patch }))
   const preview = { ...S, nutrition: n }
   const tg = computeTargets(preview)
-  const kg = bodyKg(S)
+  const weight = weightForTargets(S)
+  const kg = weight?.kg ?? null
   const goal = goalOf(preview, kg)
   const fromWeightGoal = !n.goal && goalDirection(S, kg)
   const lb = S.unit === 'lb'
@@ -81,7 +83,8 @@ function NutritionSetup({ close, first }) {
     <Section title={t('You')}>
       <div className="lrow">
         <span className="lrow-m"><span className="lrow-t">{t('Body weight')}</span>
-          <span className="lrow-s">{kg == null ? t('Log a weigh-in first; the targets follow your latest one.') : t('From your latest weigh-in')}</span></span>
+          <span className="lrow-s">{kg == null ? t('Log a weigh-in first; the targets follow your weight as it changes.')
+            : weight.source === 'trend' ? t('Trend weight, smoothed from your weigh-ins') : t('From your latest weigh-in, until there are enough for a trend')}</span></span>
         {kg == null
           ? <Button size="sm" icon="plus" onClick={() => bwSheet()}>{t('Log')}</Button>
           : <span className="lrow-v">{fmtNum(lb ? kg * LB_PER_KG : kg)} {S.unit}</span>}

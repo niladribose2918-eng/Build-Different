@@ -15,6 +15,7 @@
 // Guardrails, not options: no target below the estimated resting burn, no pace past 1% of body
 // weight a week, and no deficit at all under 18.
 import { latestMeasurement } from './measurements.js'
+import { weightForTargets } from './weight-trend.js'
 
 export const KCAL_PER_KG = 7700
 const LB_PER_KG = 2.2046226218
@@ -110,9 +111,12 @@ export function computeTargets(S, { today = new Date() } = {}) {
   const missing = missingInputs(S)
   if (missing.length && !manual) return { ok: false, missing }
 
-  const kg = bodyKg(S)
+  // The trend weight once there is one (lib/weight-trend.js): a salty dinner's water on the
+  // scale does not move tomorrow's calories.
+  const w = weightForTargets(S)
+  const kg = w?.kg ?? null
   const goal = goalOf(S, kg)
-  const base = { ok: true, kg, goal, manual: !!manual, hideCalories: !!n.hideCalories }
+  const base = { ok: true, kg, weightSource: w?.source ?? null, goal, manual: !!manual, hideCalories: !!n.hideCalories }
   if (missing.length) return { ...base, ...manualNumbers(manual), missing }
 
   const age = ageOf(n.birthYear, today)
