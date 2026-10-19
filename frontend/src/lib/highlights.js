@@ -19,14 +19,26 @@
 //   volumeSpike  working sets in the last 7 days ≥ 30 % above the 4 weeks before
 //   missedDay    a weekday whose planned session was missed 3+ times, ≥ 40 % of the time, over
 //                the last 8 weeks (a day with a note — sick, travelling — is not a miss)
-import { addDays, periodStats, workoutsIn } from './insights.js'
+//
+// With Nutrition set up, four more read food and training together. Each needs both halves to
+// be reliable on its own before it says anything:
+//   proteinTraining  protein hit on every training day in the period, 2 or more, each one logged
+//   underfuel        working sets up ≥ 20 % on the 4 weeks before while calories on complete days
+//                    ran ≥ 25 % under target (4+ complete days in the last 7)
+//   flatWhileLogging trying to lose or gain, the trend flat for 3 weeks, most days logged complete
+//   leanHeld         from the body-fat check-ins: fat down while lean mass held
+import { addDays, periodStats, workoutsIn, nutritionStats, PROTEIN_HIT } from './insights.js'
+import { goalOf } from './nutrition-targets.js'
+import { dayDone } from './food-log.js'
+import { weightTrend } from './weight-trend.js'
+import { bodyComp } from './body-comp.js'
 import { e1rmSeries } from './onerm.js'
 import { effectiveRoutineIds, workoutDay } from './history.js'
 import { loadOfWeeklyPlan, loadOfWorkouts } from './muscles.js'
 import { excusedOn } from './day-notes.js'
 import { scheduleModeOf } from './rotation.js'
 import { queueOf } from './queue.js'
-import { weekKey, MONDAY } from './format.js'
+import { weekKey, todayISO, MONDAY } from './format.js'
 
 export const MAX_HIGHLIGHTS = 3
 export const LIFT_UP_MIN_PCT = 2.5
@@ -38,6 +50,9 @@ export const SPIKE_MIN_SETS = 10
 export const MISSED_MIN = 3
 export const MISSED_RATE = 0.4
 export const CONSISTENT_WEEKS = 3
+export const UNDERFUEL_VOLUME = 1.2
+export const UNDERFUEL_KCAL = 0.75
+export const FLAT_DAYS = 21
 
 const TONE_ORDER = { good: 0, watch: 1, info: 2 }
 const daysBetween = (a, b) => Math.round((new Date(b + 'T12:00:00') - new Date(a + 'T12:00:00')) / 86400000)
@@ -145,7 +160,61 @@ export function missedDayRule(S, win) {
   return pick ? { id: 'missedDay', tone: 'info', data: pick } : null
 }
 
-export const RULES = [recordsRule, liftUpRule, consistencyRule, plateauRule, neglectedRule, volumeSpikeRule, missedDayRule]
+// Days of the period that are over: today is still being eaten and trained.
+const pastDays = (win, today = todayISO()) => (win.to < today ? win.to : addDays(today, -1))
+
+export function proteinTrainingRule(S, win, today = todayISO()) {
+  if (!S?.nutrition) return null
+  const end = pastDays(win, today)
+  const stats = nutritionStats(S, win.from, end, today)
+  if (!stats) return null
+  const trainedDays = [...new Set(workoutsIn(S, win.from, end).map(workoutDay))]
+  if (trainedDays.length < 2) return null
+  const byDay = Object.fromEntries(stats.perDay.map(x => [x.d, x]))
+  // every training day logged, or the food half is not reliable enough to say "all"
+  if (!trainedDays.every(d => byDay[d]?.logged)) return null
+  if (!trainedDays.every(d => byDay[d].p >= stats.protein * PROTEIN_HIT)) return null
+  return { id: 'proteinTraining', tone: 'good', data: { n: trainedDays.length, g: Math.round(stats.protein * PROTEIN_HIT) } }
+}
+
+export function underfuelRule(S, win, today = todayISO()) {
+  if (!S?.nutrition) return null
+  const end = pastDays(win, today)
+  const stats = nutritionStats(S, addDays(end, -6), end, today)
+  if (!stats || stats.complete < 4 || !(stats.avg > 0)) return null
+  const cur = periodStats(S, addDays(end, -6), end).sets
+  const weeks = [1, 2, 3, 4].map(i => periodStats(S, addDays(end, -6 - 7 * i), addDays(end, -7 * i)).sets)
+  if (weeks.filter(n => n > 0).length < 3) return null
+  const base = weeks.reduce((a, b) => a + b, 0) / weeks.length
+  if (!(base > 0) || cur < base * UNDERFUEL_VOLUME || stats.avg > stats.target * UNDERFUEL_KCAL) return null
+  return { id: 'underfuel', tone: 'watch', data: { volPct: Math.round((cur / base - 1) * 100), kcalPct: Math.round((1 - stats.avg / stats.target) * 100) } }
+}
+
+export function flatWhileLoggingRule(S, win, today = todayISO()) {
+  if (!S?.nutrition) return null
+  const goal = goalOf(S)
+  if (goal !== 'lose' && goal !== 'gain') return null
+  const end = pastDays(win, today)
+  let complete = 0
+  for (let i = 0; i < FLAT_DAYS; i++) if (dayDone(S, addDays(end, -i))) complete++
+  if (complete < FLAT_DAYS * 0.8) return null
+  const tr = weightTrend({ ...S, bodyweight: (S.bodyweight || []).filter(b => b.d <= end) }, { today: end })
+  if (!tr.ok || tr.direction !== 'flat' || tr.windowDays < 14) return null
+  return { id: 'flatWhileLogging', tone: 'info', data: { goal, days: complete } }
+}
+
+export function leanHeldRule(S, win) {
+  const c = bodyComp(S).masses
+  if (!c.ok) return null
+  // only while it is news: the latest check-in no more than two weeks before the period ends
+  if (c.last.d > win.to || c.last.d < addDays(win.to, -14)) return null
+  const minFat = S.unit === 'lb' ? 2 : 1
+  if (!(c.fat <= -minFat) || c.lean < -Math.max(0.5, c.first.lean * 0.01)) return null
+  return { id: 'leanHeld', tone: 'good', data: { fat: -c.fat, lean: c.lean, since: c.first.d } }
+}
+
+export const RULES = [recordsRule, liftUpRule, consistencyRule, plateauRule, neglectedRule, volumeSpikeRule, missedDayRule,
+  proteinTrainingRule, underfuelRule, flatWhileLoggingRule, leanHeldRule]
 
 /** The highlights for a period window (lib/insights.js periodWindow), good news first, at most `max`. */
 export function highlightsFor(S, win, { max = MAX_HIGHLIGHTS, rules = RULES } = {}) {

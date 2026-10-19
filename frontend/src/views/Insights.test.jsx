@@ -77,6 +77,22 @@ describe('Insights view', () => {
   })
 })
 
+describe('Insights → Nutrition', () => {
+  it('shows the period\'s food against its targets, with a bar per day', () => {
+    const host = render(Insights)
+    act(() => button(host, 'Last week').click())
+    const card = host.querySelector('[data-nutrition-insights]')
+    expect(card.textContent).toContain('Avg calories')
+    expect(card.textContent).toMatch(/Protein days\d+ \/ 7/)
+    expect(card.querySelectorAll('.wk-bar').length).toBe(7)
+  })
+
+  it('stays away without Nutrition', () => {
+    useStore.setState({ S: { ...buildDemoState(), nutrition: null } })
+    expect(render(Insights).querySelector('[data-nutrition-insights]')).toBeNull()
+  })
+})
+
 describe('Insights → Body', () => {
   it('shows the trend, the pace and the goal date for the demo weigh-ins', () => {
     const host = render(Insights)

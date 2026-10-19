@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
 import { EXIDX, exOr } from '../lib/exercises.js'
-import { exerciseNameText, fmtDateRange, fmtDur, fmtNum, fmtVol, todayISO, weekStartOf, DAYN } from '../lib/format.js'
+import { exerciseNameText, fmtDate, fmtDateRange, fmtDur, fmtNum, fmtVol, todayISO, weekStartOf, DAYN } from '../lib/format.js'
 import { t } from '../lib/i18n.js'
 import { MUSCLE_NAME } from '../lib/muscles.js'
 import { periodReport, liftsMoved, defaultPeriod, PERIODS } from '../lib/insights.js'
@@ -13,6 +13,7 @@ import { tappable } from '../lib/use-sheet-keyboard.js'
 import Icon from '../components/Icon.jsx'
 import { Button, Segmented } from '../components/ui.jsx'
 import BodySection from '../components/BodySection.jsx'
+import NutritionInsights from '../components/NutritionInsights.jsx'
 
 // Insights (Stats → Insights): a week or a month of training against the one before, the few
 // findings worth knowing about it, and the way into the Records board. Everything is worked out
@@ -47,6 +48,10 @@ export const TONE = {
   neglected: { icon: 'warning', bg: 'var(--orange)', ink: '#000' },
   volumeSpike: { icon: 'bolt', bg: 'var(--orange)', ink: '#000' },
   missedDay: { icon: 'calendar', bg: 'var(--indigo)', ink: '#fff' },
+  proteinTraining: { icon: 'utensils', bg: 'var(--teal)', ink: '#000' },
+  underfuel: { icon: 'warning', bg: 'var(--orange)', ink: '#000' },
+  flatWhileLogging: { icon: 'scale', bg: 'var(--indigo)', ink: '#fff' },
+  leanHeld: { icon: 'shield', bg: 'var(--green)', ink: '#000' },
 }
 
 // How each highlight reads: title, the line under it, and how it was worked out. Exported for
@@ -88,6 +93,26 @@ export function wordsOf(h, S) {
       title: t('{0}: your most-missed training day', t(DAYN[d.weekday])),
       detail: t('Missed {0} of {1} in the last 8 weeks. Moving that session might make it easier to keep.', d.missed, d.planned),
       why: t('Planned days with no workout and no day note, over the last 8 weeks.'),
+    }
+    case 'proteinTraining': return {
+      title: t('Protein hit on all {0} training days', d.n),
+      detail: t('{0} g or more on each day you trained.', d.g),
+      why: t('Training days in this period with food logged, against 90% of your protein target.'),
+    }
+    case 'underfuel': return {
+      title: t('Training up, food down'),
+      detail: t('Working sets up {0}% while calories ran {1}% under target. Recovery may suffer; a little more food on training days helps.', d.volPct, d.kcalPct),
+      why: t('Working sets in the last 7 days against the 4 weeks before, and calories on complete days against your target.'),
+    }
+    case 'flatWhileLogging': return {
+      title: t('Weight flat for 3 weeks while logging'),
+      detail: t('Your weekly check-in in Nutrition can adjust the target to get it moving again.'),
+      why: t('The trend moved less than 0.1% of body weight a week over 3 weeks, with most days logged complete.'),
+    }
+    case 'leanHeld': return {
+      title: t('Lean mass held while fat fell {0}', fmtNum(d.fat) + ' ' + (S.unit === 'lb' ? 'lb' : 'kg')),
+      detail: t('Since {0}, from your body-fat check-ins.', fmtDate(d.since)),
+      why: t('Body weight × body-fat % at each check-in, using a weigh-in within 3 days of it.'),
     }
     default: return null
   }
@@ -166,6 +191,7 @@ export default function Insights() {
       </div>
     </>}
 
+    <NutritionInsights report={report} />
     <BodySection />
 
     {/* For a profile saved before the Home card existed: one tap puts it there. */}

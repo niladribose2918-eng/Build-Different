@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   highlightsFor, recordsRule, liftUpRule, consistencyRule, plateauRule, neglectedRule, volumeSpikeRule, missedDayRule,
+  proteinTrainingRule, underfuelRule, flatWhileLoggingRule, leanHeldRule,
 } from './highlights.js'
 import { periodWindow, addDays } from './insights.js'
 import { buildDemoState } from './demoSeed.js'
@@ -142,5 +143,64 @@ describe('highlights', () => {
     const ids = highlightsFor(S, win, { max: 10 }).map(h => h.id)
     expect(ids).toContain('records')
     expect(ids).toContain('liftUp')
+  })
+})
+
+describe('food and training together', () => {
+  const TODAY = '2026-10-19'
+  const nutrition = { sex: 'male', birthYear: 1994, heightCm: 178, activity: 'moderate', goal: 'maintain', pace: 0.5, fatPct: 25, proteinPerKg: null, manual: null, meals: ['Breakfast', 'Lunch', 'Dinner', 'Snacks'] }
+  // `days` before today logged at `kcal` with `p` g protein, all marked complete.
+  const food = (days, { kcal = 2400, p = 160, from = 1 } = {}) => {
+    const foodLog = {}, foodDays = {}
+    for (let i = from; i < from + days; i++) {
+      const d = addDays(TODAY, -i)
+      foodLog['f' + i] = { d, m: 0, f: 'q', k: kcal, p, c: 250, fa: 70, _ts: 1 }
+      foodDays[d] = { done: true, _ts: 1 }
+    }
+    return { foodLog, foodDays }
+  }
+  const fed = (more = {}) => base({ nutrition, bodyweight: [{ d: '2026-10-10', w: 78 }], measurements: [], ...food(28), ...more })
+
+  it('says protein was hit on every training day, only when each one was logged', () => {
+    const workouts = [workout('a', '2026-10-13', [entry(BENCH, [set(60, 8)])]), workout('b', '2026-10-15', [entry(SQUAT, [set(80, 5)])])]
+    expect(proteinTrainingRule(fed({ workouts }), lastWeek, TODAY)).toMatchObject({ id: 'proteinTraining', tone: 'good', data: { n: 2 } })
+    // one training day under target
+    const S = fed({ workouts })
+    S.foodLog.f6 = { ...S.foodLog.f6, p: 60 } // 13 Oct
+    expect(proteinTrainingRule(S, lastWeek, TODAY)).toBeNull()
+    // a training day with nothing logged: no claim about "all"
+    const gap = fed({ workouts })
+    delete gap.foodLog.f4 // 15 Oct
+    expect(proteinTrainingRule(gap, lastWeek, TODAY)).toBeNull()
+    // no Nutrition, no rule
+    expect(proteinTrainingRule(base({ workouts }), lastWeek, TODAY)).toBeNull()
+  })
+
+  it('warns when training goes up while food runs well under target', () => {
+    const sets = n => Array.from({ length: n }, () => set(60, 8))
+    const workouts = [
+      ...[1, 2, 3, 4].map(i => workout('o' + i, addDays('2026-10-13', -7 * i), [entry(BENCH, sets(10))])),
+      workout('n', '2026-10-13', [entry(BENCH, sets(14))]),
+    ]
+    const lean = fed({ workouts, ...food(28, { kcal: 1500 }) })
+    expect(underfuelRule(lean, lastWeek, TODAY)).toMatchObject({ id: 'underfuel', tone: 'watch', data: { volPct: 40 } })
+    // eating to target: nothing to say
+    expect(underfuelRule(fed({ workouts }), lastWeek, TODAY)).toBeNull()
+  })
+
+  it('points to the check-in when the weight sits flat for 3 weeks of careful logging while trying to lose', () => {
+    const bodyweight = Array.from({ length: 12 }, (_, i) => ({ d: addDays(TODAY, -1 - i * 2), w: 80 + (i % 2 ? 0.2 : -0.2) }))
+    const S = fed({ bodyweight, nutrition: { ...nutrition, goal: 'lose' } })
+    expect(flatWhileLoggingRule(S, lastWeek, TODAY)).toMatchObject({ id: 'flatWhileLogging', tone: 'info' })
+    expect(flatWhileLoggingRule({ ...S, nutrition }, lastWeek, TODAY)).toBeNull()          // maintaining: flat is the goal
+    expect(flatWhileLoggingRule({ ...S, ...food(10) }, lastWeek, TODAY)).toBeNull()        // too few complete days
+  })
+
+  it('reads lean mass held while fat fell from the demo check-ins', () => {
+    const S = buildDemoState()
+    const win = periodWindow('lastWeek', todayISO(), MONDAY)
+    const h = leanHeldRule(S, { ...win, to: todayISO() })
+    expect(h).toMatchObject({ id: 'leanHeld', tone: 'good' })
+    expect(h.data.fat).toBeGreaterThan(1)
   })
 })
