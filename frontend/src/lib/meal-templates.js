@@ -125,8 +125,8 @@ const kcalOf = (items, food) => items.reduce((a, it) => a + (it ? nutrientsFor(f
 
 /**
  * One template day as plan meals, scaled towards `target` kcal: [[item…] × 4]. The scaling items
- * move by one factor, snapped to kitchen steps; then, if the day still lands more than 10% off,
- * the largest scaling item takes one more step towards the target.
+ * move by one factor, snapped to kitchen steps; then, while the day still lands more than 10% off,
+ * the largest scaling item that can still move takes one more step towards the target.
  */
 export function scaleDay(day, target, food) {
   const raw = day.map(meal => meal.map(x => ({ x, item: toItem(x, food) })).filter(r => r.item))
@@ -139,23 +139,24 @@ export function scaleDay(day, target, food) {
     const [key, unit, amount] = x
     return toItem([key, unit, snap(amount * factor, stepOf(unit))], food)
   }))
-  // one nudge on the biggest scaling item if rounding left the day more than 10% off
+  // If rounding (or a light target under fixed sides) left the day more than 10% off, step the
+  // biggest scaling item that can still move, one kitchen step at a time.
   const total = () => kcalOf(meals.flat(), food)
-  for (let i = 0; i < 4 && Math.abs(total() - target) > target * 0.1; i++) {
+  for (let i = 0; i < 16 && Math.abs(total() - target) > target * 0.1; i++) {
+    const down = total() > target
     let best = null
     meals.forEach((meal, m) => meal.forEach((it, j) => {
       const src = raw[m][j].x
       if (!src[3]) return
+      const step = stepOf(src[1])
+      const cur = src[1] === 'g' ? it.g : it.x
+      if (down && cur - step < step) return
       const k = nutrientsFor(food(it.f), it.g).k
-      if (!best || k > best.k) best = { m, j, k, src, it }
+      if (!best || k > best.k) best = { m, j, k, src, cur, step }
     }))
     if (!best) break
     const [key, unit] = best.src
-    const step = stepOf(unit)
-    const cur = unit === 'g' ? best.it.g : best.it.x
-    const next = total() > target ? Math.max(step, cur - step) : cur + step
-    if (next === cur) break
-    meals[best.m][best.j] = toItem([key, unit, next], food)
+    meals[best.m][best.j] = toItem([key, unit, down ? best.cur - best.step : best.cur + best.step], food)
   }
   return meals
 }
