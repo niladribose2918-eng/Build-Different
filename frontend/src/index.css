@@ -2144,3 +2144,10 @@ button.wl-summary{width:100%;padding:0 0 10px;text-align:start;border-radius:var
 .rep-cell .w{font-size:15px;font-weight:600;font-variant-numeric:tabular-nums}
 .rep-cell.est .w{color:var(--label-3);font-weight:500}
 .rep-cell.done{box-shadow:inset 0 0 0 1.5px var(--acc)}
+
+/* Insights (views/Insights.jsx): one highlight per row, icon tile and two lines; a tap shows how
+   it was worked out. Hairlines between rows, as in the app's lists. */
+.hl-row{display:grid;grid-template-columns:29px minmax(0,1fr);gap:11px;align-items:start;padding:9px 0;border-bottom:var(--hair) solid var(--sep);cursor:pointer}
+.hl-list .hl-row:last-child{border-bottom:0}
+.hl-row .lrow-i{font-size:16px}
+.hl-t{font-size:15px;font-weight:600;letter-spacing:-.01em;line-height:1.3}
