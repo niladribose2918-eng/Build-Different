@@ -237,3 +237,97 @@ describe('Nutrition tips', () => {
     expect(host.querySelector('[data-finish-protein]').textContent).toMatch(/Protein so far today: \d+ of \d+ g/)
   })
 })
+
+describe('Meal plan', () => {
+  const planTab = async () => {
+    route.state = { tab: 'plan' }
+    const host = mount(<Nutrition />)
+    await settle()
+    return host
+  }
+
+  it('lists the week of the demo plan with each day against the target', async () => {
+    const host = await planTab()
+    const days = host.querySelectorAll('[data-plan-day]')
+    expect(days.length).toBe(7)
+    expect(days[0].textContent).toMatch(/[\d,]+ kcal · P \d+ g/)
+    expect(host.querySelector('[data-plan-default]').textContent).toContain('Default plan')
+  })
+
+  it('opens a day, adds a food to a meal from the picker, and the plan keeps it', async () => {
+    const host = await planTab()
+    act(() => host.querySelector('[data-plan-day="1"]').click())
+    const editor = topSheet()
+    await settle()
+    const before = useStore.getState().S.mealPlans['demo-plan'].days['1'][3].length
+    const loggedBefore = Object.keys(useStore.getState().S.foodLog).length
+    act(() => editor.querySelector('[data-plan-meal="3"] [aria-label="Add food"]').click())
+    const picker = topSheet()
+    await settle()
+    type(picker.querySelector('input'), 'banana')
+    act(() => picker.querySelector('[data-food]').click())
+    act(() => button(picker, 'Add').click())
+    const after = useStore.getState().S.mealPlans['demo-plan'].days['1'][3]
+    expect(after.length).toBe(before + 1)
+    expect(after.at(-1)).toMatchObject({ f: 'u:09040', s: 'medium', x: 1, n: 'Banana' })
+    // nothing was logged: picking for a plan is not logging
+    expect(Object.keys(useStore.getState().S.foodLog)).toHaveLength(loggedBefore)
+  })
+
+  it('makes a starter week scaled to the target and uses it by default', async () => {
+    const S = buildDemoState()
+    useStore.setState({ S: { ...S, unit: 'kg', mealPlans: {}, nutrition: { ...S.nutrition, plan: null } } })
+    const host = await planTab()
+    act(() => button(host, 'New meal plan').click())
+    const sheet = topSheet()
+    await settle()
+    act(() => sheet.querySelector('[data-new-plan="veg"]').click())
+    const S2 = useStore.getState().S
+    const [id] = Object.keys(S2.mealPlans)
+    expect(S2.mealPlans[id].name).toBe('Vegetarian Indian')
+    expect(S2.nutrition.plan).toBe(id)
+    expect(Object.keys(S2.mealPlans[id].days)).toHaveLength(7)
+  })
+
+  it('builds the grocery list for the next 7 days, ticks items and keeps the ticks', async () => {
+    const host = await planTab()
+    act(() => button(host, 'Grocery list').click())
+    const sheet = topSheet()
+    await settle()
+    expect(sheet.querySelectorAll('[data-grocery-section]').length).toBeGreaterThan(3)
+    expect(sheet.textContent).toContain('Atta (whole wheat flour)')
+    act(() => sheet.querySelector('[role="checkbox"]').click())
+    expect(Object.keys(Object.values(useStore.getState().S.groceryTicks)[0].items)).toHaveLength(1)
+  })
+
+  it('switches one date to no plan from the month view', async () => {
+    const host = await planTab()
+    act(() => button(host, 'Month view').click())
+    const month = topSheet()
+    act(() => month.querySelector(`[data-month-day="${todayISO()}"]`).click())
+    const pick = topSheet()
+    act(() => button(pick, 'No plan this day').click())
+    expect(useStore.getState().S.mealDays[todayISO()].plan).toBe('none')
+  })
+
+  it('logs a planned meal from Today in one tap', async () => {
+    // a fresh day: nothing logged yet today
+    const S = buildDemoState()
+    const foodLog = Object.fromEntries(Object.entries(S.foodLog).filter(([, e]) => e.d !== todayISO()))
+    useStore.setState({ S: { ...S, unit: 'kg', foodLog } })
+    const host = mount(<Nutrition />)
+    await settle()
+    const planned = host.querySelector('[data-planned-meal="0"]')
+    expect(planned.textContent).toContain('Planned:')
+    act(() => button(planned, 'Log as planned').click())
+    expect(entriesOn(useStore.getState().S, todayISO()).filter(e => e.m === 0).length).toBeGreaterThan(0)
+  })
+
+  it('shows the next planned meal on the Home card', () => {
+    const S = buildDemoState()
+    const foodLog = Object.fromEntries(Object.entries(S.foodLog).filter(([, e]) => e.d !== todayISO()))
+    useStore.setState({ S: { ...S, unit: 'kg', foodLog } })
+    const host = mount(<NutritionCard />)
+    expect(host.querySelector('[data-next-planned]').textContent).toMatch(/Next: /)
+  })
+})

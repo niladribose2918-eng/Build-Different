@@ -21,12 +21,12 @@ export function toFood(row) {
 }
 
 let cache = null
-/** The whole list, loaded on first use: { list, byKey }. */
+/** The whole list, loaded on first use: { list, byKey, recipes, ingredients } (the last two for lib/grocery.js). */
 export function loadFoods() {
   if (!cache) {
     cache = import('./foods-data.js').then(m => {
       const list = m.FOODS.map(toFood)
-      return { list, byKey: new Map(list.map(x => [x.key, x])) }
+      return { list, byKey: new Map(list.map(x => [x.key, x])), recipes: m.RECIPES || {}, ingredients: m.INGREDIENTS || {} }
     })
     // A failed load (offline before the chunk was cached) is tried again next time.
     cache.catch(() => { cache = null })
@@ -36,3 +36,12 @@ export function loadFoods() {
 
 /** The icon name a food, or a logged entry with no food behind it, shows. */
 export const iconOf = food => FOOD_ICON[food?.icon] || QUICK_ICON
+
+/**
+ * Finding a food by key in the built-in list, and in `seen`, foods from elsewhere (packaged foods
+ * looked up by barcode): key → food or undefined. `foods` may still be loading.
+ */
+export function foodLookup(foods, seen = []) {
+  const extra = new Map(seen.map(f => [f.key, f]))
+  return key => foods?.byKey.get(key) || extra.get(key)
+}

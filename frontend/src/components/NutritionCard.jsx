@@ -6,6 +6,9 @@ import { t } from '../lib/i18n.js'
 import { computeTargets } from '../lib/nutrition-targets.js'
 import { dayTotals } from '../lib/food-log.js'
 import { checkinFor } from '../lib/adaptive-tdee.js'
+import { nextPlannedMeal, logPlanned, itemsLine } from '../lib/meal-plan.js'
+import { loadFoods, foodLookup } from '../lib/foods.js'
+import { mealLabel } from './NutritionSetup.jsx'
 import Icon from './Icon.jsx'
 import MacroSummary from './MacroSummary.jsx'
 import { addFoodSheet } from './AddFood.jsx'
@@ -39,6 +42,15 @@ export default function NutritionCard() {
   const tg = computeTargets(S)
   const totals = dayTotals(S, todayISO())
   const ci = checkinFor(S)
+  const next = nextPlannedMeal(S)
+  // the food list loads only when a planned meal is logged from here, never just to show Home
+  const logNext = async () => {
+    const foods = await loadFoods().catch(() => null)
+    if (!foods) { useUI.getState().toast(t('The food list could not load. Try again.')); return }
+    const lookup = foodLookup(foods)
+    update(s => { s.foodLog = logPlanned(s.foodLog, s, todayISO(), next.meal, lookup) })
+    useUI.getState().toast(t('Logged as planned'))
+  }
   return <div className="card" data-nutrition-card>
     <div className="row between" style={{ marginBottom: 8 }}>
       <h2 style={{ margin: 0 }}>{t("Today's nutrition")}</h2>
@@ -46,6 +58,10 @@ export default function NutritionCard() {
     </div>
     {tg.ok ? <MacroSummary tg={tg} totals={totals} hideCalories={!!S.nutrition.hideCalories} />
       : <div className="muted small">{t('Your targets need a weigh-in. Log one and they appear here.')}</div>}
+    {next && <div className="nt-next" data-next-planned={next.meal}>
+      <div className="small"><span className="dim">{t('Next: {0}', mealLabel(next.name))}</span> · {itemsLine(next.items, t)}</div>
+      <Button size="sm" variant="tinted" icon="check" onClick={logNext}>{t('Log as planned')}</Button>
+    </div>}
     {ci.due && ci.learn.ok && <button className="nci-note" data-checkin-note onClick={() => nav('/nutrition', { state: { tab: 'week' } })}>
       <Icon name="chartLine" /><span>{t('Your weekly check-in is ready')}</span><Icon name="chevronRight" />
     </button>}

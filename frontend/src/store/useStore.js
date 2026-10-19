@@ -95,6 +95,9 @@ export const DEF = {
   // behaves exactly as before. The food log, saved meals and completed days are stamped maps,
   // merged entry by entry across devices (lib/food-log.js, lib/sync-merge.js).
   nutrition: null, foodLog: {}, savedMeals: {}, foodDays: {}, nutritionCheckins: {},
+  // Meal plans (lib/meal-plan.js), their one-off days, the grocery ticks per week (lib/grocery.js)
+  // and packaged foods looked up by barcode (lib/barcode-food.js): stamped maps, like the log.
+  mealPlans: {}, mealDays: {}, groceryTicks: {}, foodsSeen: {},
   // Body measurements (#82): one check-in per day, values in cm whatever the weight unit
   // (lib/measurements.js); merged across devices like weigh-ins (lib/sync-merge.js).
   measurements: [], measurementEnabled: null, customMeasurements: [],

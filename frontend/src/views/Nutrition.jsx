@@ -6,7 +6,8 @@ import { fmtDate, fmtNum, todayISO } from '../lib/format.js'
 import { t } from '../lib/i18n.js'
 import { computeTargets } from '../lib/nutrition-targets.js'
 import { byMeal, dayTotals, amountOf, copyMeal, dayDone, withDayDone, withSavedMeal, QUICK } from '../lib/food-log.js'
-import { loadFoods } from '../lib/foods.js'
+import { loadFoods, foodLookup } from '../lib/foods.js'
+import { plannedOn, logPlanned, itemsLine } from '../lib/meal-plan.js'
 import { tappable } from '../lib/use-sheet-keyboard.js'
 import Icon from '../components/Icon.jsx'
 import MacroSummary from '../components/MacroSummary.jsx'
@@ -15,6 +16,7 @@ import { addFoodSheet, editEntrySheet, FoodPic } from '../components/AddFood.jsx
 import { Button, Segmented, Switch, TextField } from '../components/ui.jsx'
 import NutritionWeek from '../components/NutritionWeek.jsx'
 import NutritionTip from '../components/NutritionTip.jsx'
+import MealPlan from '../components/MealPlan.jsx'
 
 // Nutrition (Home → Today's nutrition): the day's food by meal against the day's targets. A day
 // can be stepped back through; tomorrow is the meal plan's job, not the log's. Nothing here is
@@ -54,7 +56,7 @@ function SaveMeal({ entries, start, close }) {
   </>
 }
 
-function Meal({ m, d, S, foods, hide, yesterdayMeal }) {
+function Meal({ m, d, S, lookup, hide, yesterdayMeal, planned }) {
   return <div className="card nt-meal" data-meal={m.meal}>
     <div className="row between">
       <h2 style={{ margin: 0 }}>{mealLabel(m.name)}</h2>
@@ -65,14 +67,18 @@ function Meal({ m, d, S, foods, hide, yesterdayMeal }) {
       </div>
     </div>
     {m.entries.length ? <div className="nt-entries">{m.entries.map(e => {
-      const food = foods?.byKey.get(e.f)
+      const food = lookup(e.f)
       const name = e.f === QUICK ? (e.n || t('Quick add')) : food?.name || t('Logged food')
       return <div className="nt-entry tappable" key={e.id} data-entry={e.id} {...tappable(() => editEntrySheet(e.id))}>
         <FoodPic food={food} />
         <div className="grow"><div className="nt-name">{name}</div><div className="small dim">{amountOf(e, t) || t('Quick add')}</div></div>
         <span className="small">{hide ? `${fmtNum(e.p)} g` : fmtNum(e.k)}</span>
       </div>
-    })}</div> : yesterdayMeal ? <Button size="sm" variant="ghost" icon="copy" className="nt-copy"
+    })}</div> : planned?.length ? <div className="nt-planned" data-planned-meal={m.meal}>
+      <div className="small muted"><Icon name="calendar" /> {t('Planned: {0}', itemsLine(planned, t))}</div>
+      <Button size="sm" variant="tinted" icon="check" disabled={!lookup('in:roti')}
+        onClick={() => { update(s => { s.foodLog = logPlanned(s.foodLog, S, d, m.meal, lookup) }); toast(t('Logged as planned')) }}>{t('Log as planned')}</Button>
+    </div> : yesterdayMeal ? <Button size="sm" variant="ghost" icon="copy" className="nt-copy"
       onClick={() => { update(s => { s.foodLog = copyMeal(s.foodLog, S, shift(d, -1), m.meal, d) }); toast(t('Copied from the day before')) }}>
       {t('Same as the day before')}
     </Button> : <div className="small dim" style={{ marginTop: 6 }}>{t('Nothing logged')}</div>}
@@ -86,13 +92,13 @@ export default function Nutrition() {
   const [d, setD] = useState(today)
   // The Home card's check-in note opens straight on Week.
   const loc = useLocation()
-  const [tab, setTab] = useState(() => (loc?.state?.tab === 'week' ? 'week' : 'today'))
+  const [tab, setTab] = useState(() => (['week', 'plan'].includes(loc?.state?.tab) ? loc.state.tab : 'today'))
   const [foods, setFoods] = useState(null)
   useEffect(() => { let live = true; loadFoods().then(f => { if (live) setFoods(f) }, () => {}); return () => { live = false } }, [])
 
   const header = <div className="hdr">
     <button className="iconbtn" onClick={() => nav('/home')} aria-label={t('Home')}><Icon name="chevronLeft" /></button>
-    <div style={{ flex: 1, marginLeft: 10 }}><h1>{t('Nutrition')}</h1><div className="sub">{S.nutrition && tab === 'week' ? t('Your week and check-in') : d === today ? t('Today') : fmtDate(d, true)}</div></div>
+    <div style={{ flex: 1, marginLeft: 10 }}><h1>{t('Nutrition')}</h1><div className="sub">{S.nutrition && tab === 'week' ? t('Your week and check-in') : S.nutrition && tab === 'plan' ? t('Plan once, log in a tap') : d === today ? t('Today') : fmtDate(d, true)}</div></div>
     {S.nutrition && <button className="iconbtn" onClick={() => nutritionSetupSheet()} aria-label={t('Nutrition settings')}><Icon name="gear" /></button>}
   </div>
 
@@ -114,11 +120,13 @@ export default function Nutrition() {
   const before = byMeal(S, shift(d, -1))
   const totals = dayTotals(S, d)
   const done = dayDone(S, d)
+  const lookup = foodLookup(foods)
+  const planned = plannedOn(S, d)
 
   return <div className="narrow">
     {header}
-    <Segmented className="nt-tabs" value={tab} onChange={setTab} options={[{ value: 'today', label: t('Today') }, { value: 'week', label: t('Week') }]} />
-    {tab === 'week' ? <NutritionWeek /> : <>
+    <Segmented className="nt-tabs" value={tab} onChange={setTab} options={[{ value: 'today', label: t('Today') }, { value: 'plan', label: t('Meal plan') }, { value: 'week', label: t('Week') }]} />
+    {tab === 'week' ? <NutritionWeek /> : tab === 'plan' ? <MealPlan /> : <>
     <div className="nt-daynav">
       <button className="iconbtn" aria-label={t('Previous day')} onClick={() => setD(shift(d, -1))}><Icon name="chevronLeft" /></button>
       <span className="small">{fmtDate(d, true)}</span>
@@ -136,7 +144,7 @@ export default function Nutrition() {
 
     {d === today && <NutritionTip S={S} />}
 
-    {meals.map(m => <Meal key={m.meal} m={m} d={d} S={S} foods={foods} hide={hide} yesterdayMeal={before[m.meal]?.entries.length > 0} />)}
+    {meals.map(m => <Meal key={m.meal} m={m} d={d} S={S} lookup={lookup} hide={hide} yesterdayMeal={before[m.meal]?.entries.length > 0} planned={planned?.[m.meal]} />)}
 
     <div className="card">
       <div className="lrow" style={{ padding: 0 }}>

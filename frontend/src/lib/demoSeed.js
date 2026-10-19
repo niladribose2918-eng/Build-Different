@@ -67,15 +67,39 @@ const FOOD = {
   pb: ['u:16098', 'tbsp', 16, 598, 22.2, 22.3, 51.4, 5], samosa: ['in:samosa', 'samosa', 90, 298, 4.4, 32.2, 17, 2.4],
   jamun: ['in:gulab-jamun', 'piece', 30, 401, 5, 59.3, 16.7, 0.2], paratha: ['in:aloo-paratha', 'paratha', 125, 233, 6.4, 37.9, 7.5, 3.3],
 }
-// Each meal is a few [food, how many] picks; one is drawn per meal per day.
+// Each meal is a few [food, how many] picks; one is drawn per meal per day. In the profile's meal
+// order: Breakfast, Lunch, Dinner, Snacks.
 const MEALS = [
   [[['poha', 1.5], ['chai', 1], ['egg', 2]], [['oats', 2], ['milk', 1], ['banana', 1]], [['egg', 3], ['bread', 2], ['chai', 1]], [['idli', 4], ['sambar', 1], ['coffee', 1]], [['paratha', 2], ['curd', 1]]],
   [[['chicken', 1.5], ['jeera', 1.5], ['toor', 1], ['salad', 1]], [['rajma', 1.5], ['rice', 2], ['curd', 1]], [['roti', 4], ['bhurji', 1], ['raita', 1]]],
-  [[['greek', 1], ['banana', 1]], [['whey', 1], ['apple', 1]], [['almonds', 1], ['sprouts', 1]], [['whey', 1], ['milk', 1]], [['bread', 2], ['pb', 1]]],
   [[['roti', 3], ['curry', 1.5], ['salad', 1]], [['palak', 1], ['roti', 3], ['moong', 1]], [['eggCurry', 1.5], ['rice', 1.5], ['raita', 1]], [['fish', 1.5], ['rice', 2]]],
+  [[['greek', 1], ['banana', 1]], [['whey', 1], ['apple', 1]], [['almonds', 1], ['sprouts', 1]], [['whey', 1], ['milk', 1]], [['bread', 2], ['pb', 1]]],
 ]
-const MEAL_HOURS = [8, 13, 17, 21]
+const MEAL_HOURS = [8, 13, 21, 17]
 const r1 = v => Math.round(v * 10) / 10
+// The food list's names for the foods above, for the demo meal plan's items (plans keep a name
+// for Home's one line, never numbers).
+const FOOD_NAME = {
+  poha: 'Poha', chai: 'Chai with milk and sugar', oats: 'Oats, rolled, dry', milk: 'Milk, whole', banana: 'Banana',
+  egg: 'Egg, hard-boiled', bread: 'Bread, whole wheat', idli: 'Idli', sambar: 'Sambar', coffee: 'Filter coffee',
+  chicken: 'Chicken breast, roasted', jeera: 'Jeera rice', toor: 'Toor dal (tadka)', salad: 'Kachumber salad',
+  rajma: 'Rajma masala', rice: 'Rice, white, cooked', curd: 'Curd / plain yogurt, whole milk', roti: 'Roti / chapati',
+  bhurji: 'Paneer bhurji', raita: 'Cucumber raita', greek: 'Greek yogurt, plain, nonfat', whey: 'Whey protein powder',
+  apple: 'Apple', almonds: 'Almonds', sprouts: 'Sprouts salad', curry: 'Chicken curry', palak: 'Palak paneer',
+  moong: 'Moong dal (yellow)', eggCurry: 'Egg curry', fish: 'Fish curry (rohu)', pb: 'Peanut butter, smooth',
+  samosa: 'Samosa', jamun: 'Gulab jamun', paratha: 'Aloo paratha',
+}
+// A week planned from the same meals the demo eats: each weekday takes the next option of each meal.
+export function demoMealPlan() {
+  const days = {}
+  for (let wd = 0; wd < 7; wd++) {
+    days[String(wd)] = MEALS.map(options => options[wd % options.length].map(([name, count]) => {
+      const [f, s, g1] = FOOD[name]
+      return { f, g: r1(g1 * count), s, x: count, n: FOOD_NAME[name] }
+    }))
+  }
+  return { name: 'Training week', mode: 'week', days }
+}
 function foodLogged(name, count, d, m) {
   const [f, s, g1, k, p, c, fa, fb] = FOOD[name]
   const g = g1 * count, x = g / 100
@@ -172,8 +196,8 @@ export function buildDemoState() {
         if ((isToday && nowH < MEAL_HOURS[m] + 1) || (partial && m >= 2)) return
         for (const [name, count] of pick) foodLog[`demo-${iso}-${String(n++).padStart(2, '0')}`] = { ...foodLogged(name, count, iso, m), _ts: at(day, MEAL_HOURS[m], 10) }
         // after a Mon/Wed/Fri session, a shake and a banana
-        if (m === 2 && [1, 3, 5].includes(day.getDay())) for (const name of ['whey', 'banana']) foodLog[`demo-${iso}-${String(n++).padStart(2, '0')}`] = { ...foodLogged(name, 1, iso, m), _ts: at(day, 19, 30) }
-        if (m === 2 && day.getDay() === 0) foodLog[`demo-${iso}-${String(n++).padStart(2, '0')}`] = { ...foodLogged(frnd() < 0.5 ? 'samosa' : 'jamun', 1, iso, m), _ts: at(day, MEAL_HOURS[m], 20) }
+        if (m === 3 && [1, 3, 5].includes(day.getDay())) for (const name of ['whey', 'banana']) foodLog[`demo-${iso}-${String(n++).padStart(2, '0')}`] = { ...foodLogged(name, 1, iso, m), _ts: at(day, 19, 30) }
+        if (m === 3 && day.getDay() === 0) foodLog[`demo-${iso}-${String(n++).padStart(2, '0')}`] = { ...foodLogged(frnd() < 0.5 ? 'samosa' : 'jamun', 1, iso, m), _ts: at(day, MEAL_HOURS[m], 20) }
       })
       if (!skip && !partial && !isToday) foodDays[iso] = { done: true, _ts: at(day, 22, 0) }
     }
@@ -249,7 +273,8 @@ export function buildDemoState() {
     targetW: TARGET_W,
     // Nutrition set up the way the plan's worked example is: 178 cm, born 1994, moderately
     // active, following the body-weight goal (lose) at 0.5% a week.
-    nutrition: { ...defaultNutrition(), sex: 'male', birthYear: 1994, heightCm: 178, activity: 'moderate', pace: 0.5 },
+    nutrition: { ...defaultNutrition(), sex: 'male', birthYear: 1994, heightCm: 178, activity: 'moderate', pace: 0.5, plan: 'demo-plan' },
+    mealPlans: { 'demo-plan': { ...demoMealPlan(), _ts: Date.now() } },
     foodLog, foodDays, showNutritionCard: true,
     // The demo shows the Home cards a new profile starts with.
     showWeekCard: true,

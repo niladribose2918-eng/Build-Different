@@ -12,6 +12,8 @@
 //     manual: null | { kcal, protein, carbs, fat },
 //     maintenance: null | { kcal, d },   learned at a weekly check-in, replaces the formula
 //     tips: true,             the training-day, finish-screen and fibre tips (lib/nutrition-tips.js)
+//     plan: null,             the meal plan that applies by default (lib/meal-plan.js)
+//     barcode: false,         barcode lookup, opt-in: sends the number to Open Food Facts
 //     hideCalories: false, meals: ['Breakfast', 'Lunch', 'Dinner', 'Snacks'] }
 //
 // Guardrails, not options: no target below the estimated resting burn, no pace past 1% of body
@@ -40,7 +42,7 @@ export const MAX_MEALS = 6
 
 export const defaultNutrition = () => ({
   sex: null, birthYear: null, heightCm: null, activity: 'moderate', goal: null, pace: 0.5,
-  proteinPerKg: null, fatPct: 25, manual: null, maintenance: null, tips: true, hideCalories: false, meals: [...DEFAULT_MEALS],
+  proteinPerKg: null, fatPct: 25, manual: null, maintenance: null, tips: true, plan: null, barcode: false, hideCalories: false, meals: [...DEFAULT_MEALS],
 })
 
 /** The daily target for a maintenance and the profile's goal and pace: { kcal, delta, floored }. */

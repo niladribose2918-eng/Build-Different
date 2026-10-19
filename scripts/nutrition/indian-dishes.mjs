@@ -28,6 +28,24 @@ const I = {
   tamarind: '09322', lemon: '09152', sprouts: '11043', pav: '18342', tea: '14355', coffee: '14209',
   moth: '16078', milletFlour: '20647', jowarFlour: '20648', puffedRice: '08156',
 }
+// What each ingredient is called on a shopping list (lib/grocery.js). null leaves it off: brewed
+// tea and coffee are cups, not something you buy by the gram.
+export const SHOP = {
+  toor: 'Toor dal', masoor: 'Masoor dal', moong: 'Moong dal', urad: 'Urad dal', chana: 'Chana dal', rajma: 'Rajma',
+  rice: 'Rice', atta: 'Atta (whole wheat flour)', maida: 'Maida', sooji: 'Sooji (rava)', besan: 'Besan',
+  oil: 'Cooking oil', ghee: 'Ghee', mustardOil: 'Mustard oil', butter: 'Butter',
+  onion: 'Onions', tomato: 'Tomatoes', potato: 'Potatoes', cauli: 'Cauliflower', okra: 'Bhindi (okra)', brinjal: 'Brinjal',
+  spinach: 'Spinach', peas: 'Green peas', carrot: 'Carrots', beans: 'French beans', capsicum: 'Capsicum', cabbage: 'Cabbage',
+  garlic: 'Garlic', ginger: 'Ginger', chili: 'Green chillies', lauki: 'Lauki (bottle gourd)', karela: 'Karela', mushroom: 'Mushrooms',
+  cucumber: 'Cucumber', cilantro: 'Coriander leaves', mango: 'Mango',
+  milk: 'Milk', curd: 'Curd (dahi)', cream: 'Cream', paneer: 'Paneer',
+  chicken: 'Chicken, boneless', goat: 'Mutton, boneless', fish: 'Fish (rohu or carp)', egg: 'Eggs', shrimp: 'Prawns',
+  coconut: 'Coconut', peanuts: 'Peanuts', cashew: 'Cashews', almonds: 'Almonds', sugar: 'Sugar', jaggery: 'Jaggery',
+  tamarind: 'Tamarind', lemon: 'Lemons', sprouts: 'Moong sprouts', pav: 'Pav', tea: null, coffee: null,
+  moth: 'Moth beans (matki)', milletFlour: 'Bajra flour', jowarFlour: 'Jowar flour', puffedRice: 'Puffed rice (murmura)',
+}
+export const INGREDIENT_IDS = I
+
 const KATORI = ['katori', 150], BOWL = ['bowl', 250], PLATE = ['plate', 250], GLASS = ['glass', 250], CUP = ['cup', 150]
 
 export default [

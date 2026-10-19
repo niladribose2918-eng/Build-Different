@@ -3,7 +3,7 @@ import { useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
 import { fmtNum, todayISO } from '../lib/format.js'
 import { t } from '../lib/i18n.js'
-import { loadFoods, iconOf } from '../lib/foods.js'
+import { loadFoods, iconOf, foodLookup } from '../lib/foods.js'
 import { searchFoods } from '../lib/food-search.js'
 import {
   foodEntry, quickEntry, withEntry, withoutEntry, recentFoods, mealsOf, nutrientsFor, savedMealsOf, logSavedMeal, QUICK,
@@ -134,7 +134,7 @@ function useFoods() {
   return { foods, failed }
 }
 
-function AddFood({ d, meal: meal0, close }) {
+function AddFood({ d, meal: meal0, close, onPick, title }) {
   const S = useStore(s => s.S)
   const meals = mealsOf(S)
   const hide = !!S.nutrition?.hideCalories
@@ -144,15 +144,20 @@ function AddFood({ d, meal: meal0, close }) {
   const [picked, setPicked] = useState(null)
   const [limit, setLimit] = useState(PAGE)
   const recent = useMemo(() => recentFoods(S, { today: todayISO() }), [S.foodLog])
-  const results = useMemo(() => (foods && q.trim() ? searchFoods(foods.list, q, { recent, limit: 200 }) : []), [foods, q, recent])
+  const all = useMemo(() => (foods ? foods.list : []), [foods])
+  const lookup = useMemo(() => foodLookup(foods), [foods])
+  const results = useMemo(() => (foods && q.trim() ? searchFoods(all, q, { recent, limit: 200 }) : []), [foods, all, q, recent])
   const browse = useMemo(() => {
     if (!foods) return []
-    const mine = [...recent.keys()].map(k => foods.byKey.get(k)).filter(Boolean)
+    const mine = [...recent.keys()].map(lookup).filter(Boolean)
     return mine.length ? mine : foods.list.filter(f => f.everyday || f.dish)
-  }, [foods, recent])
+  }, [foods, recent, lookup])
   const saved = savedMealsOf(S)
+  const where = title || t('Add to {0}', mealLabel(meals[meal0] || meals[0]))
 
+  // Picking for a meal plan hands the entries back instead of logging them.
   const add = entry => {
+    if (onPick) { onPick([entry]); close(); return }
     update(s => { s.foodLog = withEntry(s.foodLog, { ...entry, d }) })
     toast(t('Added to {0}', mealLabel(meals[entry.m] || meals[0])))
     close()
@@ -162,7 +167,7 @@ function AddFood({ d, meal: meal0, close }) {
 
   const list = q.trim() ? results : browse
   return <div className="nt-add">
-    <h3>{t('Add to {0}', mealLabel(meals[meal0] || meals[0]))}</h3>
+    <h3>{where}</h3>
     <SearchField value={q} onChange={e => { setQ(e.target.value); setLimit(PAGE) }} onClear={() => setQ('')} placeholder={t('Search foods and dishes')} aria-label={t('Search foods and dishes')} />
     {!q.trim() && <Segmented className="nt-tabs" value={tab} onChange={setTab}
       options={[{ value: 'recent', label: recent.size ? t('Recent') : t('Common') }, { value: 'saved', label: t('Saved meals') }, { value: 'quick', label: t('Quick add') }]} />}
@@ -178,6 +183,7 @@ function AddFood({ d, meal: meal0, close }) {
       return <div className="item" key={m.id} data-saved-meal={m.id}>
         <span className="thumb thumb-x nt-pic" aria-hidden="true"><Icon name="utensils" /></span>
         <button className="grow item-open" onClick={() => {
+          if (onPick) { onPick(m.items.map(it => ({ ...it, m: meal0 }))); close(); return }
           update(s => { s.foodLog = logSavedMeal(s.foodLog, m, d, meal0) })
           toast(t('Added to {0}', mealLabel(meals[meal0] || meals[0])))
           close()
@@ -191,9 +197,11 @@ function AddFood({ d, meal: meal0, close }) {
   </div>
 }
 
-export function addFoodSheet({ d = todayISO(), meal = 0 } = {}) {
-  return useUI.getState().openSheet(close => <AddFood d={d} meal={meal} close={close} />)
+/** Add food to a meal of day `d`; with `onPick(entries)`, pick for a meal plan instead of logging. */
+export function addFoodSheet({ d = todayISO(), meal = 0, onPick = null, title = '' } = {}) {
+  return useUI.getState().openSheet(close => <AddFood d={d} meal={meal} close={close} onPick={onPick} title={title} />)
 }
+
 
 // Changing or removing an entry already logged.
 function EditEntry({ id, close }) {
@@ -209,7 +217,7 @@ function EditEntry({ id, close }) {
   const remove = () => { update(s => { s.foodLog = withoutEntry(s.foodLog, id) }); toast(t('Removed')); close() }
   if (e.f === QUICK) return <><h3>{e.n || t('Quick add')}</h3><QuickAdd start={e} meals={meals} meal={e.m || 0} onSave={save} onBack={close} onDelete={remove} /></>
   if (!foods && !failed) return <div className="empty small">{t('Loading foods…')}</div>
-  const food = foods?.byKey.get(e.f)
+  const food = foodLookup(foods)(e.f)
   // A food no longer in the list keeps its numbers; it can still move meals or go.
   if (!food) return <>
     <h3>{t('Logged food')}</h3>

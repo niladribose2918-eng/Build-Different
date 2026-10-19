@@ -2238,3 +2238,16 @@ button.wl-summary{width:100%;padding:0 0 10px;text-align:start;border-radius:var
 .nt-tip .grow{flex:1;min-width:0;line-height:1.4}
 .wk-bars.wk-bars-dense{gap:2px;padding-bottom:0}
 .wk-bars.wk-bars-dense .wk-target{margin-bottom:0}
+
+/* --- Nutrition → Meal plan (components/MealPlan.jsx) and planned meals on Today and Home --- */
+.nt-planned,.nt-next{display:flex;flex-direction:column;align-items:flex-start;gap:8px;margin-top:8px}
+.nt-planned .icn{font-size:13px;vertical-align:-2px}
+.nt-next{padding-top:10px;border-top:var(--hair) solid var(--sep)}
+.mp-day{flex:none;width:34px;font-weight:600;color:var(--label-2)}
+.mp-chip{width:60%;height:3px;border-radius:2px}
+.gr-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-top:var(--hair) solid var(--sep)}
+.gr-row:first-of-type{border-top:0}
+.gr-row .grow{flex:1;min-width:0}
+.gr-done{text-decoration:line-through;color:var(--label-3)}
+.mp-opts{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}
+.mp-opts>.seg{flex:1 0 100%}
