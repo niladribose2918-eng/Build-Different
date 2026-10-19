@@ -2151,3 +2151,10 @@ button.wl-summary{width:100%;padding:0 0 10px;text-align:start;border-radius:var
 .hl-list .hl-row:last-child{border-bottom:0}
 .hl-row .lrow-i{font-size:16px}
 .hl-t{font-size:15px;font-weight:600;letter-spacing:-.01em;line-height:1.3}
+
+/* "Where this leaves you" on the finish summary (components/FinishContext.jsx): the week's
+   planned sessions as pips under the line that counts them. */
+.fc-row{align-items:flex-start}
+.fc-pips{display:flex;gap:4px;margin-top:7px}
+.fc-pips i{flex:1;max-width:44px;height:5px;border-radius:3px;background:var(--surface-3)}
+.fc-pips i.on{background:var(--green)}
