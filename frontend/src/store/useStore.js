@@ -94,7 +94,7 @@ export const DEF = {
   // Nutrition (lib/nutrition-targets.js): null until set up, so a profile that never opens it
   // behaves exactly as before. The food log, saved meals and completed days are stamped maps,
   // merged entry by entry across devices (lib/food-log.js, lib/sync-merge.js).
-  nutrition: null, foodLog: {}, savedMeals: {}, foodDays: {},
+  nutrition: null, foodLog: {}, savedMeals: {}, foodDays: {}, nutritionCheckins: {},
   // Body measurements (#82): one check-in per day, values in cm whatever the weight unit
   // (lib/measurements.js); merged across devices like weigh-ins (lib/sync-merge.js).
   measurements: [], measurementEnabled: null, customMeasurements: [],

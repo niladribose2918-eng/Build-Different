@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
-import { fmtNum, fmtPlate } from '../lib/format.js'
+import { fmtDate, fmtNum, fmtPlate, todayISO } from '../lib/format.js'
 import { t } from '../lib/i18n.js'
 import {
   ACTIVITY, PACES, PROTEIN_RANGE, FAT_RANGE, MAX_MEALS, computeTargets, defaultNutrition, goalDirection, goalOf,
@@ -40,13 +40,20 @@ export function TargetMaths({ tg, unit }) {
   if (!tg?.ok || tg.bmr == null) return null
   const kgShown = unit === 'lb' ? fmtNum(Math.abs(tg.weeklyKg) * LB_PER_KG) + ' lb' : fmtNum(Math.abs(tg.weeklyKg)) + ' kg'
   return <div className="nt-maths" data-target-maths>
-    <div className="nt-mrow"><span>{t('Resting burn (Mifflin-St Jeor)')}</span><b>{kcalOf(tg.bmr)}</b></div>
-    <div className="nt-mrow"><span>{t('× everyday activity: {0}', fmtPlate(tg.factor))}</span><b>{kcalOf(tg.tdee)}</b></div>
+    {tg.learned ? <>
+      <div className="nt-mrow"><span>{t('Maintenance learned from your log ({0})', fmtDate(tg.learned.d || todayISO()))}</span><b>{kcalOf(tg.tdee)}</b></div>
+      <div className="nt-mrow dim"><span>{t('The formula alone said')}</span><span>{kcalOf(tg.formulaTdee)}</span></div>
+    </> : <>
+      <div className="nt-mrow"><span>{t('Resting burn (Mifflin-St Jeor)')}</span><b>{kcalOf(tg.bmr)}</b></div>
+      <div className="nt-mrow"><span>{t('× everyday activity: {0}', fmtPlate(tg.factor))}</span><b>{kcalOf(tg.tdee)}</b></div>
+    </>}
     {Math.round(tg.delta) !== 0 && <div className="nt-mrow"><span>{tg.delta < 0 ? t('Deficit, about {0} a week', kgShown) : t('Surplus, about {0} a week', kgShown)}</span><b>{tg.delta > 0 ? '+' : '−'}{kcalOf(Math.abs(tg.delta))}</b></div>}
     <div className="nt-mrow nt-mtot"><span>{t('Daily target')}</span><b>{fmtNum(tg.kcal)} {t('kcal')}</b></div>
     {tg.floored && <div className="small dim" style={{ marginTop: 6 }}>{t('Held at your resting burn: a target below it is not set here, whatever the pace.')}</div>}
     {tg.minor && <div className="small dim" style={{ marginTop: 6 }}>{t('Under 18: no deficit is set. Talk to a doctor or dietitian before trying to lose weight.')}</div>}
-    <div className="small dim" style={{ marginTop: 6 }}>{t('An estimate to start from: the formula can be off by 10% or more for one person.')}</div>
+    <div className="small dim" style={{ marginTop: 6 }}>{tg.learned
+      ? t('Learned at your weekly check-in from what you ate and how your trend weight moved. Still an estimate; each check-in refines it.')
+      : t('An estimate to start from: the formula can be off by 10% or more for one person. Weekly check-ins replace it with your own numbers.')}</div>
   </div>
 }
 
@@ -163,6 +170,14 @@ function NutritionSetup({ close, first }) {
       </div>)}
       {meals.length < MAX_MEALS && <Row2 onClick={() => set({ meals: [...meals, t('Meal {0}', meals.length + 1)] })} />}
     </Section>
+
+    {n.maintenance && <Section title={t('Learned maintenance')}>
+      <div className="lrow">
+        <span className="lrow-m"><span className="lrow-t">{t('{0} kcal a day', fmtNum(n.maintenance.kcal))}</span>
+          <span className="lrow-s">{t('From your check-in on {0}. Activity no longer changes it.', fmtDate(n.maintenance.d || todayISO()))}</span></span>
+        <Button size="sm" variant="ghost" onClick={() => set({ maintenance: null })}>{t('Use the formula')}</Button>
+      </div>
+    </Section>}
 
     <Section title={t('Display')}>
       <div className="lrow">

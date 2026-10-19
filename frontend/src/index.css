@@ -2215,3 +2215,24 @@ button.wl-summary{width:100%;padding:0 0 10px;text-align:start;border-radius:var
 .wk-lines>div{display:flex;gap:6px;align-items:baseline}
 .wk-lines .icn,.wk-lines .wk-dot{flex:none;align-self:center}
 .bt-rate{display:flex;gap:4px;align-items:center;margin-top:8px}
+
+/* --- Nutrition → Week and the weekly check-in (components/NutritionWeek.jsx); nci-, as ci- is the gym check-in's --- */
+.tiles.tiles-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.tiles.tiles-3 .tile{padding:12px 10px}
+.tiles.tiles-3 .tile .v{font-size:20px!important}
+.nci-rows{margin:10px 0 4px}
+.nci-verdict{display:flex;gap:6px;align-items:flex-start;font-size:15px;font-weight:500;margin:10px 0}
+.nci-verdict .icn{flex:none;margin-top:2px;color:var(--green)}
+.nci-note{display:flex;align-items:center;gap:8px;width:100%;margin-top:10px;padding:9px 10px;border-radius:var(--r);background:var(--acc-soft);color:var(--label);font-size:14px;text-align:start}
+.nci-note>span{flex:1}
+.nci-note .icn{flex:none;color:var(--acc)}
+.wk-bars{position:relative;display:flex;align-items:flex-end;gap:6px;height:120px;margin-top:12px;padding-bottom:18px}
+.wk-bar{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;position:relative}
+.wk-bar>span{width:100%;max-width:28px;border-radius:5px 5px 2px 2px;background:var(--surface-3)}
+.wk-bar>span.on{background:var(--acc)}
+.wk-bar>span.part{background:color-mix(in srgb,var(--acc) 45%,var(--surface-3))}
+.wk-bar>em{position:absolute;bottom:-18px;font-style:normal;font-size:11px;color:var(--label-2)}
+.wk-target{position:absolute;left:0;right:0;border-top:1px dashed var(--yellow);margin-bottom:18px;pointer-events:none;z-index:1}
+.wk-target>i{position:absolute;right:0;top:-15px;font-style:normal;font-size:10px;color:var(--yellow)}
+.wk-bars.wk-bars-dense{gap:2px;padding-bottom:0}
+.wk-bars.wk-bars-dense .wk-target{margin-bottom:0}

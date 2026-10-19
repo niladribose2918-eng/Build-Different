@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
 import { fmtDate, fmtNum, todayISO } from '../lib/format.js'
@@ -12,7 +12,8 @@ import Icon from '../components/Icon.jsx'
 import MacroSummary from '../components/MacroSummary.jsx'
 import { nutritionSetupSheet, mealLabel, TargetMaths } from '../components/NutritionSetup.jsx'
 import { addFoodSheet, editEntrySheet, FoodPic } from '../components/AddFood.jsx'
-import { Button, Switch, TextField } from '../components/ui.jsx'
+import { Button, Segmented, Switch, TextField } from '../components/ui.jsx'
+import NutritionWeek from '../components/NutritionWeek.jsx'
 
 // Nutrition (Home → Today's nutrition): the day's food by meal against the day's targets. A day
 // can be stepped back through; tomorrow is the meal plan's job, not the log's. Nothing here is
@@ -82,12 +83,15 @@ export default function Nutrition() {
   const S = useStore(s => s.S)
   const today = todayISO()
   const [d, setD] = useState(today)
+  // The Home card's check-in note opens straight on Week.
+  const loc = useLocation()
+  const [tab, setTab] = useState(() => (loc?.state?.tab === 'week' ? 'week' : 'today'))
   const [foods, setFoods] = useState(null)
   useEffect(() => { let live = true; loadFoods().then(f => { if (live) setFoods(f) }, () => {}); return () => { live = false } }, [])
 
   const header = <div className="hdr">
     <button className="iconbtn" onClick={() => nav('/home')} aria-label={t('Home')}><Icon name="chevronLeft" /></button>
-    <div style={{ flex: 1, marginLeft: 10 }}><h1>{t('Nutrition')}</h1><div className="sub">{d === today ? t('Today') : fmtDate(d, true)}</div></div>
+    <div style={{ flex: 1, marginLeft: 10 }}><h1>{t('Nutrition')}</h1><div className="sub">{S.nutrition && tab === 'week' ? t('Your week and check-in') : d === today ? t('Today') : fmtDate(d, true)}</div></div>
     {S.nutrition && <button className="iconbtn" onClick={() => nutritionSetupSheet()} aria-label={t('Nutrition settings')}><Icon name="gear" /></button>}
   </div>
 
@@ -112,6 +116,8 @@ export default function Nutrition() {
 
   return <div className="narrow">
     {header}
+    <Segmented className="nt-tabs" value={tab} onChange={setTab} options={[{ value: 'today', label: t('Today') }, { value: 'week', label: t('Week') }]} />
+    {tab === 'week' ? <NutritionWeek /> : <>
     <div className="nt-daynav">
       <button className="iconbtn" aria-label={t('Previous day')} onClick={() => setD(shift(d, -1))}><Icon name="chevronLeft" /></button>
       <span className="small">{fmtDate(d, true)}</span>
@@ -136,6 +142,7 @@ export default function Nutrition() {
         <Switch checked={done} onChange={v => update(s => { s.foodDays = withDayDone(s.foodDays, d, v) })} />
       </div>
     </div>
+    </>}
     <div className="small dim nt-credit">{t('Food values: USDA National Nutrient Database (SR28). Indian dishes are recipe estimates built from it.')}</div>
   </div>
 }

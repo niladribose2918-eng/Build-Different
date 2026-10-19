@@ -5,6 +5,7 @@ import { todayISO } from '../lib/format.js'
 import { t } from '../lib/i18n.js'
 import { computeTargets } from '../lib/nutrition-targets.js'
 import { dayTotals } from '../lib/food-log.js'
+import { checkinFor } from '../lib/adaptive-tdee.js'
 import Icon from './Icon.jsx'
 import MacroSummary from './MacroSummary.jsx'
 import { addFoodSheet } from './AddFood.jsx'
@@ -37,6 +38,7 @@ export default function NutritionCard() {
   </div>
   const tg = computeTargets(S)
   const totals = dayTotals(S, todayISO())
+  const ci = checkinFor(S)
   return <div className="card" data-nutrition-card>
     <div className="row between" style={{ marginBottom: 8 }}>
       <h2 style={{ margin: 0 }}>{t("Today's nutrition")}</h2>
@@ -44,6 +46,9 @@ export default function NutritionCard() {
     </div>
     {tg.ok ? <MacroSummary tg={tg} totals={totals} hideCalories={!!S.nutrition.hideCalories} />
       : <div className="muted small">{t('Your targets need a weigh-in. Log one and they appear here.')}</div>}
+    {ci.due && ci.learn.ok && <button className="nci-note" data-checkin-note onClick={() => nav('/nutrition', { state: { tab: 'week' } })}>
+      <Icon name="chartLine" /><span>{t('Your weekly check-in is ready')}</span><Icon name="chevronRight" />
+    </button>}
     <div className="row" style={{ gap: 8, marginTop: 10 }}>
       <Button size="sm" icon="plus" onClick={() => addFoodSheet({ d: todayISO(), meal: 0 })}>{t('Log food')}</Button>
       <Button size="sm" variant="ghost" trailingIcon="chevronRight" onClick={() => nav('/nutrition')}>{t('Open')}</Button>

@@ -14,6 +14,8 @@
 import { isoOf, todayISO, weekKey, MONDAY } from './format.js'
 import { workoutDay, workoutDuration, workoutVolume, workSetsDone } from './history.js'
 import { e1rmSeries } from './onerm.js'
+import { computeTargets } from './nutrition-targets.js'
+import { dayTotals, dayDone, entriesOn } from './food-log.js'
 
 export const PERIODS = ['week', 'lastWeek', 'month', 'lastMonth']
 
@@ -111,3 +113,34 @@ export function defaultPeriod(remembered, today = todayISO(), ws = MONDAY) {
   const early = daysBetween(weekKey(today, ws), today) < 2
   return pick === 'week' && early ? 'lastWeek' : pick
 }
+
+// A protein day counts as hit from 90% of the target: a few grams short is a hit in practice.
+export const PROTEIN_HIT = 0.9
+
+/**
+ * The food side of a period (Insights → Nutrition, Nutrition → Week), or null without Nutrition:
+ *   { target, protein, days, logged, complete, avg, proteinDays, perDay: [{ d, k, p, logged, done, today }] }
+ * Today is still being eaten, so it is drawn but left out of every count and average. The
+ * average is over complete days when there are any, else over the days with anything logged.
+ */
+export function nutritionStats(S, from, to, today = todayISO()) {
+  if (!S?.nutrition) return null
+  const tg = computeTargets(S)
+  if (!tg.ok) return null
+  const perDay = []
+  for (let d = from; d <= to; d = addDays(d, 1)) {
+    const tot = dayTotals(S, d)
+    perDay.push({ d, k: tot.k, p: tot.p, logged: entriesOn(S, d).length > 0, done: dayDone(S, d), today: d === today })
+  }
+  const counted = perDay.filter(x => x.d < today)
+  const logged = counted.filter(x => x.logged)
+  const complete = logged.filter(x => x.done)
+  const base = complete.length ? complete : logged
+  return {
+    target: tg.kcal, protein: tg.protein, days: counted.length, logged: logged.length, complete: complete.length,
+    avg: base.length ? Math.round(base.reduce((a, x) => a + x.k, 0) / base.length) : null,
+    proteinDays: logged.filter(x => x.p >= tg.protein * PROTEIN_HIT).length,
+    perDay,
+  }
+}
+

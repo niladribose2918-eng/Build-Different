@@ -12,7 +12,8 @@ import { todayISO } from '../lib/format.js'
 import { dayTotals, entriesOn } from '../lib/food-log.js'
 
 const navSpy = vi.fn()
-vi.mock('react-router-dom', () => ({ useNavigate: () => navSpy }))
+const route = vi.hoisted(() => ({ state: null }))
+vi.mock('react-router-dom', () => ({ useNavigate: () => navSpy, useLocation: () => ({ state: route.state }) }))
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 const mounted = []
@@ -39,6 +40,7 @@ const blank = () => JSON.parse(JSON.stringify(DEF))
 
 beforeEach(() => {
   navSpy.mockClear()
+  route.state = null
   localStorage.clear()
   useUI.setState({ sheets: [] })
   useStore.setState({ S: buildDemoState(), user: null })
@@ -161,5 +163,51 @@ describe('Home card', () => {
     const host = mount(<NutritionCard />)
     expect(host.textContent).toContain('g protein')
     expect(host.textContent).not.toMatch(/kcal/)
+  })
+})
+
+describe('Nutrition → Week', () => {
+  it('opens on Week from the Home note, with the check-in, the last 7 days and nothing applied yet', () => {
+    route.state = { tab: 'week' }
+    const host = mount(<Nutrition />)
+    const ci = host.querySelector('[data-checkin]')
+    expect(['suggest', 'on-track']).toContain(ci.dataset.checkin)
+    expect(ci.textContent).toContain('Your maintenance, about')
+    expect(host.querySelector('[data-week-days]').textContent).toContain('Protein days')
+    expect(host.querySelectorAll('.wk-bar').length).toBe(7)
+    expect(host.querySelector('[data-checkin-history]')).toBeNull()
+  })
+
+  it('records an answer, shows it in the history and waits a week for the next', () => {
+    route.state = { tab: 'week' }
+    const host = mount(<Nutrition />)
+    const ci = host.querySelector('[data-checkin]')
+    act(() => (button(ci, 'Done') || button(ci, 'Keep current')).click())
+    expect(Object.keys(useStore.getState().S.nutritionCheckins)).toHaveLength(1)
+    expect(host.querySelector('[data-checkin="later"]').textContent).toContain('7 days')
+    expect(host.querySelector('[data-checkin-history]').textContent).toContain('Kept')
+  })
+
+  it('applies a suggestion only on a tap, and the target follows it', () => {
+    // a log that eats well under the formula while the weight holds: maintenance reads lower
+    const S = buildDemoState()
+    for (const e of Object.values(S.foodLog)) if (e.k) e.k = Math.round(e.k * 0.8)
+    useStore.setState({ S: { ...S, unit: 'kg' } })
+    route.state = { tab: 'week' }
+    const host = mount(<Nutrition />)
+    const ci = host.querySelector('[data-checkin="suggest"]')
+    expect(ci.textContent).toMatch(/Suggested target: [\d,]+ kcal, now [\d,]+/)
+    act(() => button(ci, 'Apply').click())
+    const after = useStore.getState().S
+    expect(after.nutrition.maintenance.kcal).toBeGreaterThan(0)
+    expect(Object.values(after.nutritionCheckins)[0].applied).toBe(true)
+  })
+
+  it('puts a one-line note on the Home card when the check-in is ready', () => {
+    const host = mount(<NutritionCard />)
+    const note = host.querySelector('[data-checkin-note]')
+    expect(note.textContent).toContain('Your weekly check-in is ready')
+    act(() => note.click())
+    expect(navSpy).toHaveBeenCalledWith('/nutrition', { state: { tab: 'week' } })
   })
 })

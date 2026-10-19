@@ -10,6 +10,8 @@
 //     proteinPerKg: null,     null = 2.0 when losing or recomping, 1.8 otherwise
 //     fatPct: 25,             % of calories, 20–35; carbs fill the rest
 //     manual: null | { kcal, protein, carbs, fat },
+//     maintenance: null | { kcal, d },   learned at a weekly check-in, replaces the formula
+//     tips: true,             the training-day, finish-screen and fibre tips (lib/nutrition-tips.js)
 //     hideCalories: false, meals: ['Breakfast', 'Lunch', 'Dinner', 'Snacks'] }
 //
 // Guardrails, not options: no target below the estimated resting burn, no pace past 1% of body
@@ -38,8 +40,18 @@ export const MAX_MEALS = 6
 
 export const defaultNutrition = () => ({
   sex: null, birthYear: null, heightCm: null, activity: 'moderate', goal: null, pace: 0.5,
-  proteinPerKg: null, fatPct: 25, manual: null, hideCalories: false, meals: [...DEFAULT_MEALS],
+  proteinPerKg: null, fatPct: 25, manual: null, maintenance: null, tips: true, hideCalories: false, meals: [...DEFAULT_MEALS],
 })
+
+/** The daily target for a maintenance and the profile's goal and pace: { kcal, delta, floored }. */
+export function targetFor(maintenance, { bmr, kg, goal, pace, minor }) {
+  const sign = goal === 'gain' ? 1 : goal === 'maintain' ? 0 : -1
+  let delta = minor && sign < 0 ? 0 : sign * pace / 100 * kg * KCAL_PER_KG / 7
+  let kcal = maintenance + delta
+  const floored = kcal < bmr
+  if (floored) { kcal = bmr; delta = bmr - maintenance }
+  return { kcal: Math.round(kcal / 10) * 10, delta, floored }
+}
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v))
 const num = v => (v == null || v === '' || !Number.isFinite(Number(v)) ? null : Number(v))
@@ -123,17 +135,17 @@ export function computeTargets(S, { today = new Date() } = {}) {
   const minor = age < 18
   const bmr = restingBurn({ sex: n.sex, kg, cm: Number(n.heightCm), age })
   const factor = activityFactor(n.activity)
-  const tdee = bmr * factor
+  const formulaTdee = bmr * factor
+  // Maintenance learned from the food log and the trend (lib/adaptive-tdee.js), once a weekly
+  // check-in has been applied; the formula until then.
+  const learned = num(n.maintenance?.kcal) > 0 ? { kcal: Number(n.maintenance.kcal), d: n.maintenance.d || null } : null
+  const tdee = learned ? learned.kcal : formulaTdee
   const pace = goal === 'recomp' ? RECOMP_PACE
     : goal === 'lose' ? clamp(num(n.pace) ?? 0.5, PACES.lose[0], PACES.lose.at(-1))
     : goal === 'gain' ? clamp(num(n.pace) ?? 0.25, PACES.gain[0], PACES.gain.at(-1))
     : 0
   const sign = goal === 'gain' ? 1 : goal === 'maintain' ? 0 : -1
-  let delta = minor && sign < 0 ? 0 : sign * pace / 100 * kg * KCAL_PER_KG / 7
-  let kcal = tdee + delta
-  const floored = kcal < bmr
-  if (floored) { kcal = bmr; delta = bmr - tdee }
-  kcal = Math.round(kcal / 10) * 10
+  const { kcal, delta, floored } = targetFor(tdee, { bmr, kg, goal, pace, minor })
 
   const proteinPerKg = clamp(num(n.proteinPerKg) ?? defaultProtein(goal), PROTEIN_RANGE[0], PROTEIN_RANGE[1])
   const fatPct = clamp(num(n.fatPct) ?? 25, FAT_RANGE[0], FAT_RANGE[1])
@@ -148,7 +160,7 @@ export function computeTargets(S, { today = new Date() } = {}) {
   const carbs = Math.max(0, Math.floor((kcal - protein * 4 - fat * 9) / 4))
 
   return {
-    ...base, age, minor, bmr, factor, tdee, pace: minor && sign < 0 ? 0 : pace, delta,
+    ...base, age, minor, bmr, factor, formulaTdee, learned, tdee, pace: minor && sign < 0 ? 0 : pace, delta,
     // what the target works out to on the scale, the resting-burn floor included
     weeklyKg: delta * 7 / KCAL_PER_KG,
     kcal, protein, carbs, fat, proteinPerKg, fatPct, lean, floored,
