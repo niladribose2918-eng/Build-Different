@@ -14,6 +14,7 @@ import { nutritionSetupSheet, mealLabel, TargetMaths } from '../components/Nutri
 import { addFoodSheet, editEntrySheet, FoodPic } from '../components/AddFood.jsx'
 import { Button, Segmented, Switch, TextField } from '../components/ui.jsx'
 import NutritionWeek from '../components/NutritionWeek.jsx'
+import NutritionTip from '../components/NutritionTip.jsx'
 
 // Nutrition (Home → Today's nutrition): the day's food by meal against the day's targets. A day
 // can be stepped back through; tomorrow is the meal plan's job, not the log's. Nothing here is
@@ -132,6 +133,8 @@ export default function Nutrition() {
         <Button size="sm" variant="ghost" trailingIcon="chevronRight" onClick={mathsSheet}>{t('How we got here')}</Button>
       </div>
     </div>
+
+    {d === today && <NutritionTip S={S} />}
 
     {meals.map(m => <Meal key={m.meal} m={m} d={d} S={S} foods={foods} hide={hide} yesterdayMeal={before[m.meal]?.entries.length > 0} />)}
 

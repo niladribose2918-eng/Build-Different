@@ -2234,5 +2234,7 @@ button.wl-summary{width:100%;padding:0 0 10px;text-align:start;border-radius:var
 .wk-bar>em{position:absolute;bottom:-18px;font-style:normal;font-size:11px;color:var(--label-2)}
 .wk-target{position:absolute;left:0;right:0;border-top:1px dashed var(--yellow);margin-bottom:18px;pointer-events:none;z-index:1}
 .wk-target>i{position:absolute;right:0;top:-15px;font-style:normal;font-size:10px;color:var(--yellow)}
+.nt-tip{display:flex;align-items:center;gap:10px;padding:10px 12px}
+.nt-tip .grow{flex:1;min-width:0;line-height:1.4}
 .wk-bars.wk-bars-dense{gap:2px;padding-bottom:0}
 .wk-bars.wk-bars-dense .wk-target{margin-bottom:0}

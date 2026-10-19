@@ -184,6 +184,10 @@ function NutritionSetup({ close, first }) {
         <span className="lrow-m"><span className="lrow-t">{t('Hide calories')}</span><span className="lrow-s">{t('Track protein and meals without calorie numbers.')}</span></span>
         <Switch checked={!!n.hideCalories} onChange={v => set({ hideCalories: v })} />
       </div>
+      <div className="lrow">
+        <span className="lrow-m"><span className="lrow-t">{t('Tips')}</span><span className="lrow-s">{t('Protein around training days, protein on the finish screen, and a fibre nudge.')}</span></span>
+        <Switch checked={n.tips !== false} onChange={v => set({ tips: v })} />
+      </div>
     </Section>
 
     <div className="small dim" style={{ margin: '4px 2px 14px' }}>{t('Pregnant, breastfeeding or managing a medical condition? Ask a doctor or dietitian for your targets and set them as your own.')}</div>

@@ -1,11 +1,13 @@
 import { t } from '../lib/i18n.js'
 import { fmtDate } from '../lib/format.js'
 import { finishContext } from '../lib/finish-context.js'
+import { finishProtein } from '../lib/nutrition-tips.js'
 import Icon from './Icon.jsx'
 
 // "Where this leaves you" on the finish summary (lib/finish-context.js): the week against the
-// plan, the streak, and today against the last time this routine was trained. At most three
-// lines, and a line with nothing to say is left out, so a first-ever session shows none.
+// plan, the streak, and today against the last time this routine was trained, plus protein so
+// far today once Nutrition is on (lib/nutrition-tips.js). A line with nothing to say is left
+// out, so a first-ever session shows none.
 export default function FinishContext({ st, w }) {
   const { week, streak, vsLast } = finishContext(st, w)
   const rows = []
@@ -39,6 +41,13 @@ export default function FinishContext({ st, w }) {
         <div className="ss">{parts.join(' · ')}</div></div>
     </div>)
   }
+  // With Nutrition on: protein so far today, the one number worth knowing straight after training.
+  const fp = finishProtein(st)
+  if (fp) rows.push(<div key="protein" className="item fc-row" data-finish-protein>
+    <span className="lrow-i" style={{ background: 'var(--teal)', color: '#000' }}><Icon name="utensils" /></span>
+    <div className="grow"><div className="tt">{t('Protein so far today: {0} of {1} g', fp.p, fp.target)}</div>
+      <div className="nt-bar-t" style={{ marginTop: 6 }}><span style={{ width: Math.min(100, fp.p / fp.target * 100) + '%', background: 'var(--acc)' }} /></div></div>
+  </div>)
   if (!rows.length) return null
   return <div style={{ textAlign: 'start', marginBottom: 14 }} data-finish-context>
     <h4 className="sec">{t('Where this leaves you')}</h4>

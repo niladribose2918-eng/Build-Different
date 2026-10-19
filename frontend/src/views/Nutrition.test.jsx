@@ -6,6 +6,7 @@ import { DEF, freshState, useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
 import Nutrition from './Nutrition.jsx'
 import NutritionCard from '../components/NutritionCard.jsx'
+import FinishContext from '../components/FinishContext.jsx'
 import { buildDemoState } from '../lib/demoSeed.js'
 import { loadFoods } from '../lib/foods.js'
 import { todayISO } from '../lib/format.js'
@@ -209,5 +210,30 @@ describe('Nutrition → Week', () => {
     expect(note.textContent).toContain('Your weekly check-in is ready')
     act(() => note.click())
     expect(navSpy).toHaveBeenCalledWith('/nutrition', { state: { tab: 'week' } })
+  })
+})
+
+describe('Nutrition tips', () => {
+  it('shows today\'s session protein tip, hides it for the day on ×, and none when switched off', async () => {
+    // the demo always has a session planned today (a rest day gets the next routine moved onto it)
+    const host = mount(<Nutrition />)
+    await settle()
+    const tip = host.querySelector('[data-tip="training"]')
+    expect(tip.textContent).toMatch(/today\. A protein-rich meal before and after helps/)
+    act(() => tip.querySelector('[aria-label="Hide for today"]').click())
+    expect(host.querySelector('[data-tip="training"]')).toBeNull()
+    localStorage.clear()
+    const S = useStore.getState().S
+    useStore.setState({ S: { ...S, nutrition: { ...S.nutrition, tips: false } } })
+    expect(mount(<Nutrition />).querySelector('[data-tip]')).toBeNull()
+  })
+
+  it('adds protein so far today to the finish summary', () => {
+    // a meal logged today, whatever the hour the test runs at
+    const S0 = useStore.getState().S
+    const S = { ...S0, foodLog: { ...S0.foodLog, zz: { d: todayISO(), m: 0, f: 'q', k: 400, p: 40, c: 30, fa: 10, _ts: 1 } } }
+    const w = S.workouts.at(-1)
+    const host = mount(<FinishContext st={S} w={w} />)
+    expect(host.querySelector('[data-finish-protein]').textContent).toMatch(/Protein so far today: \d+ of \d+ g/)
   })
 })
