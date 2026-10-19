@@ -7,6 +7,8 @@ import { useUI } from '../store/useUI.js'
 import Insights from './Insights.jsx'
 import Records from './Records.jsx'
 import Stats from './Stats.jsx'
+import WeekCard from '../components/WeekCard.jsx'
+import { freshState } from '../store/useStore.js'
 import { buildDemoState } from '../lib/demoSeed.js'
 
 const navSpy = vi.fn()
@@ -133,5 +135,34 @@ describe('Stats', () => {
     expect(card).toBeTruthy()
     act(() => [...card.querySelectorAll('button')].find(b => b.textContent.includes('Open')).click())
     expect(navSpy).toHaveBeenCalledWith('/insights')
+  })
+})
+
+describe('This week on Home', () => {
+  it('shows the week, last week, the top highlight and the weight trend, and opens Insights', () => {
+    useStore.setState({ S: { ...buildDemoState(), unit: 'kg', showWeekCard: true } })
+    const host = render(WeekCard)
+    const card = host.querySelector('[data-week-card]')
+    expect(card.textContent).toContain('This week')
+    expect(card.textContent).toMatch(/Last week · workouts: \d+ · PRs: \d+/)
+    expect(card.querySelector('[data-week-highlight]')).toBeTruthy()
+    expect(card.querySelector('[data-week-weight]').textContent).toMatch(/Trend weight [\d.]+ kg/)
+    act(() => card.click())
+    expect(navSpy).toHaveBeenCalledWith('/insights')
+  })
+
+  it('stays off a profile saved before it existed, and is on for a new one', () => {
+    useStore.setState({ S: JSON.parse(JSON.stringify(DEF)) })
+    expect(render(WeekCard).querySelector('[data-week-card]')).toBeNull()
+    useStore.setState({ S: freshState() })
+    expect(render(WeekCard).querySelector('[data-week-card]')).toBeTruthy()
+  })
+
+  it('can be added to Home from Insights in one tap', () => {
+    useStore.setState({ S: { ...buildDemoState(), showWeekCard: false } })
+    const host = render(Insights)
+    act(() => button(host.querySelector('[data-add-week-card]'), 'Add to Home').click())
+    expect(useStore.getState().S.showWeekCard).toBe(true)
+    expect(host.querySelector('[data-add-week-card]')).toBeNull()
   })
 })

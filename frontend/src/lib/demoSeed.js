@@ -251,6 +251,8 @@ export function buildDemoState() {
     // active, following the body-weight goal (lose) at 0.5% a week.
     nutrition: { ...defaultNutrition(), sex: 'male', birthYear: 1994, heightCm: 178, activity: 'moderate', pace: 0.5 },
     foodLog, foodDays, showNutritionCard: true,
+    // The demo shows the Home cards a new profile starts with.
+    showWeekCard: true,
     // The history is rated, so the demo turns the column on and the stats get a scale to
     // label their aggregates with instead of guessing one (see displayScale).
     effort: 'rir'

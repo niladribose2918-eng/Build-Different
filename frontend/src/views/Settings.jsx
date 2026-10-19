@@ -761,6 +761,11 @@ export default function Settings({ page = null, find = null, via = null }) {
           subtitle={t('Show the body weight card on Home.')}>
           <Switch checked={S.showWeightCard !== false} onChange={v => update(s => { s.showWeightCard = v })} />
         </Row>
+        {/* The week at a glance: sessions, last week, the top highlight, the weight trend. */}
+        <Row icon="chartLine" iconTint="var(--blue)" title={t('This week')}
+          subtitle={t('Show the week at a glance on Home, with the top highlight from Insights.')}>
+          <Switch checked={!!S.showWeekCard} onChange={v => update(s => { s.showWeekCard = v })} />
+        </Row>
         {/* The way into Nutrition: a setup offer until it is set up, then the day's numbers. */}
         <Row icon="utensils" iconTint="var(--green)" title={t("Today's nutrition")}
           subtitle={t('Show calories and macros on Home, and open Nutrition from there.')}>

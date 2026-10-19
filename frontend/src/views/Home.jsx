@@ -5,6 +5,7 @@ import { effectiveRoutines, effectiveRoutineIds, nextTrainingDay, streakWeeks, l
 import { fmtNum, fmtDate, todayISO, isoOf, weekStartOf, weekDayOffset, DAYS, DAYN } from '../lib/format.js'
 import { t, tn, dateLocale } from '../lib/i18n.js'
 import NutritionCard from '../components/NutritionCard.jsx'
+import WeekCard from '../components/WeekCard.jsx'
 import { bwSheet, goalSheet, dayOverrideSheet, calendarSheet, startFlow, starterPlanSheet, bwDeltaColor, weighInsSheet } from '../sheets.jsx'
 import LineChart from '../components/LineChart.jsx'
 import Icon from '../components/Icon.jsx'
@@ -237,6 +238,7 @@ export default function Home() {
       </div>
     </div>
 
+    <WeekCard />
     <NutritionCard />
   </div>
 }

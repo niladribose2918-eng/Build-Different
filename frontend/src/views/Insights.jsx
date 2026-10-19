@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
+import { useUI } from '../store/useUI.js'
 import { EXIDX, exOr } from '../lib/exercises.js'
 import { exerciseNameText, fmtDateRange, fmtDur, fmtNum, fmtVol, todayISO, weekStartOf, DAYN } from '../lib/format.js'
 import { t } from '../lib/i18n.js'
@@ -38,7 +39,7 @@ function Delta({ d, kind = 'count', unit }) {
   return <span className="small" style={style}>{arrow}{fmtNum(Math.abs(d.diff))}</span>
 }
 
-const TONE = {
+export const TONE = {
   records: { icon: 'trophy', bg: 'var(--yellow)', ink: '#000' },
   liftUp: { icon: 'chartLine', bg: 'var(--blue)', ink: '#fff' },
   consistency: { icon: 'checkCircle', bg: 'var(--green)', ink: '#000' },
@@ -48,8 +49,9 @@ const TONE = {
   missedDay: { icon: 'calendar', bg: 'var(--indigo)', ink: '#fff' },
 }
 
-// How each highlight reads: title, the line under it, and how it was worked out.
-function wordsOf(h, S) {
+// How each highlight reads: title, the line under it, and how it was worked out. Exported for
+// the Home "This week" card (components/WeekCard.jsx), which shows the top one's title.
+export function wordsOf(h, S) {
   const d = h.data
   switch (h.id) {
     case 'records': return {
@@ -165,5 +167,15 @@ export default function Insights() {
     </>}
 
     <BodySection />
+
+    {/* For a profile saved before the Home card existed: one tap puts it there. */}
+    {!S.showWeekCard && <div className="card row between" data-add-week-card style={{ alignItems: 'center', gap: 12 }}>
+      <div style={{ minWidth: 0 }}><h2 style={{ margin: 0 }}>{t('This week on Home')}</h2>
+        <div className="muted small" style={{ marginTop: 4 }}>{t('Sessions, last week and the top highlight, on the screen you open every day.')}</div></div>
+      <Button size="sm" variant="tinted" icon="plus" style={{ flexShrink: 0 }} onClick={() => {
+        useStore.getState().update(s => { s.showWeekCard = true })
+        useUI.getState().toast(t('Added to Home'))
+      }}>{t('Add to Home')}</Button>
+    </div>}
   </>
 }

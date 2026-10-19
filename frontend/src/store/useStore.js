@@ -205,6 +205,10 @@ export const DEF = {
   // profile saved before it existed, so nothing new appears there unasked; on for a new profile
   // (freshState). Settings → Look & Home switches it.
   showNutritionCard: false,
+  // The "This week" card on Home (components/WeekCard.jsx): the week's sessions, last week, the
+  // top highlight and the weight trend. Off for a profile saved before it existed, on for a new
+  // one (freshState); Settings → Look & Home and Insights' "Add to Home" switch it.
+  showWeekCard: false,
   // Whether Start opens the quick weigh-in first (sheets.jsx startFlow, issue #137). Off starts
   // the session straight away; weight can still be logged from Home/Stats. On here, so an
   // older profile without the key reads as on (`!== false`) and keeps the step it had; a profile
@@ -274,6 +278,7 @@ export function freshState() {
   // so the first set is on screen without scrolling. DEF stays 'full' for a profile saved before.
   s.gifSize = 'mini'
   s.showNutritionCard = true
+  s.showWeekCard = true
   return s
 }
 

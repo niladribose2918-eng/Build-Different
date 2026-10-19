@@ -2208,4 +2208,10 @@ button.wl-summary{width:100%;padding:0 0 10px;text-align:start;border-radius:var
 .bt-goal{margin-top:12px;padding-top:10px;border-top:var(--hair) solid var(--sep)}
 .bc-read{display:flex;gap:8px;align-items:flex-start;margin-top:10px;font-size:14px;line-height:1.4}
 .bc-read .icn{flex:none;margin-top:2px;color:var(--label-2)}
+/* the Home "This week" card (components/WeekCard.jsx) */
+.wk-lines{display:flex;flex-direction:column;gap:5px;margin-top:10px}
+.wk-lines .icn{font-size:13px;vertical-align:-2px;color:var(--label-2)}
+.wk-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-inline-end:3px;vertical-align:0}
+.wk-lines>div{display:flex;gap:6px;align-items:baseline}
+.wk-lines .icn,.wk-lines .wk-dot{flex:none;align-self:center}
 .bt-rate{display:flex;gap:4px;align-items:center;margin-top:8px}
