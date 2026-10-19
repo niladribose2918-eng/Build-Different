@@ -2158,3 +2158,47 @@ button.wl-summary{width:100%;padding:0 0 10px;text-align:start;border-radius:var
 .fc-pips{display:flex;gap:4px;margin-top:7px}
 .fc-pips i{flex:1;max-width:44px;height:5px;border-radius:3px;background:var(--surface-3)}
 .fc-pips i.on{background:var(--green)}
+
+/* --- Nutrition (views/Nutrition.jsx, components/NutritionCard.jsx, AddFood.jsx, NutritionSetup.jsx) --- */
+.nt-sum .nt-big{margin-bottom:10px}
+.nt-sum .nt-big b{font-size:30px;font-weight:600;letter-spacing:-.026em}
+.nt-bar{margin-top:8px}
+.nt-bar-l{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px}
+.nt-bar-t{height:6px;border-radius:3px;background:var(--surface-3);overflow:hidden}
+.nt-bar-t>span{display:block;height:100%;border-radius:3px}
+.nt-daynav{display:flex;align-items:center;justify-content:space-between;margin:-6px auto 12px;max-width:260px;background:var(--surface);border-radius:999px;padding:2px}
+.nt-daynav .iconbtn{background:transparent;width:34px;height:34px;font-size:15px}
+.nt-daynav .iconbtn:disabled{opacity:.3}
+.nt-meal .nt-entries{margin-top:8px}
+.nt-entry{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:var(--hair) solid var(--sep)}
+.nt-entry .grow{flex:1;min-width:0}
+.nt-name{overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.nt-pic.thumb{width:40px;height:40px;font-size:19px;border-radius:9px}
+.nt-pic-l.thumb{width:64px;height:64px;font-size:30px;border-radius:14px}
+.nt-copy{margin-top:6px}
+.nt-credit{text-align:center;margin:6px 12px 18px;line-height:1.4}
+.nt-tabs{margin:10px 0}
+.nt-add .searchf{margin-bottom:4px}
+.nt-note{margin:-2px 0 12px;line-height:1.4}
+.nt-qty{margin:12px 0}
+.nt-facts{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:4px 0 14px;text-align:center}
+.nt-facts>div{background:var(--surface-2);border-radius:var(--r);padding:8px 2px}
+.nt-facts b{display:block;font-size:17px;font-weight:600}
+.nt-facts span{font-size:11px;color:var(--label-2)}
+.nt-setup .lrow.nt-stack{flex-wrap:wrap;gap:8px}
+.nt-setup .lrow.nt-stack>.seg{flex:1 0 100%}
+.nt-setup .lrow .field{flex:1}
+.nt-num.measure-input{height:38px;width:112px;flex:none}
+.nt-num .num{text-align:end}
+.nt-setup .stp{flex:none;width:150px}
+.nt-setup .lrow .field{flex:1;background:var(--surface-2);border-radius:var(--r-sm);padding:8px 10px}
+.nt-qty .measure-input i{white-space:nowrap}
+.nt-manual{padding:6px 12px 10px}
+.nt-preview{padding:12px 14px}
+.nt-pbig{font-size:26px;font-weight:600;letter-spacing:-.02em}
+.nt-pbig small{font-size:14px;font-weight:400;color:var(--label-2)}
+.nt-maths{margin-top:10px;border-top:var(--hair) solid var(--sep);padding-top:8px}
+.nt-mrow{display:flex;justify-content:space-between;gap:10px;font-size:14px;padding:3px 0}
+.nt-mrow>span{color:var(--label-2)}
+.nt-mrow.nt-mtot{border-top:var(--hair) solid var(--sep);margin-top:4px;padding-top:6px}
+.nt-mrow.nt-mtot>span{color:var(--label)}

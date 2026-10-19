@@ -91,6 +91,10 @@ export const DEF = {
   // A note per day off (#261): { [iso]: { tag, text, _ts } } (lib/day-notes.js). A noted day is
   // excused from the missed-day nudge; each day merges on its own stamp (lib/sync-merge.js).
   dayNotes: {},
+  // Nutrition (lib/nutrition-targets.js): null until set up, so a profile that never opens it
+  // behaves exactly as before. The food log, saved meals and completed days are stamped maps,
+  // merged entry by entry across devices (lib/food-log.js, lib/sync-merge.js).
+  nutrition: null, foodLog: {}, savedMeals: {}, foodDays: {},
   // Body measurements (#82): one check-in per day, values in cm whatever the weight unit
   // (lib/measurements.js); merged across devices like weigh-ins (lib/sync-merge.js).
   measurements: [], measurementEnabled: null, customMeasurements: [],
@@ -196,6 +200,11 @@ export const DEF = {
   // entries, Stats, imports and the separate pre-workout weigh-in flow keep working.
   // Defaults on; an older profile without the key reads as on (`!== false`).
   showWeightCard: true,
+  // The "Today's nutrition" card on Home (components/NutritionCard.jsx), which is also the way
+  // into Nutrition: before setup it offers to set it up, after that it shows the day. Off for a
+  // profile saved before it existed, so nothing new appears there unasked; on for a new profile
+  // (freshState). Settings → Look & Home switches it.
+  showNutritionCard: false,
   // Whether Start opens the quick weigh-in first (sheets.jsx startFlow, issue #137). Off starts
   // the session straight away; weight can still be logged from Home/Stats. On here, so an
   // older profile without the key reads as on (`!== false`) and keeps the step it had; a profile
@@ -264,6 +273,7 @@ export function freshState() {
   // Exercise animations: Small (v1.3.11), a thumbnail beside the exercise name that a tap opens,
   // so the first set is on screen without scrolling. DEF stays 'full' for a profile saved before.
   s.gifSize = 'mini'
+  s.showNutritionCard = true
   return s
 }
 

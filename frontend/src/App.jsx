@@ -41,6 +41,7 @@ import Muscles from './views/Muscles.jsx'
 import StructuralBalance from './views/StructuralBalance.jsx'
 import Insights from './views/Insights.jsx'
 import Records from './views/Records.jsx'
+import Nutrition from './views/Nutrition.jsx'
 import ProgressPhotos from './views/ProgressPhotos.jsx'
 import { SettingsRoute } from './views/Settings.jsx'
 import Admin from './views/Admin.jsx'
@@ -220,6 +221,7 @@ function Shell() {
               <Route path="/structural-balance" element={<StructuralBalance />} />
               <Route path="/insights" element={<Insights />} />
               <Route path="/records" element={<Records />} />
+              <Route path="/nutrition" element={<Nutrition />} />
               <Route path="/progress-photos" element={<ProgressPhotos />} />
               <Route path="/measurements" element={<Measurements />} />
               <Route path="/settings" element={<SettingsRoute />} />
