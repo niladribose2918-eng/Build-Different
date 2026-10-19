@@ -53,7 +53,42 @@ export function writeState(dir, uid, S) {
   fs.writeFileSync(path.join(dir, 'state-' + uid + '.json'), JSON.stringify(S));
 }
 
-/** A profile that has consented and has some history — the usual starting point. */
+/* The day the dated fixtures in these tests are written against.
+ *
+ * A review window (payload.js reviewWindow) and the cohort's figures (cohort.js) count back
+ * twelve weeks from today, and sampleState() logs its one session on 2026-07-20. On the real
+ * clock that session aged out of the window on 2026-10-13, and ten tests failed overnight with
+ * nothing changed: an empty window, so the fixture provider answered `nochange`, the cohort
+ * counted nobody, and `window.workouts.at(-1)` was undefined. A note test dated 2026-09-03 would
+ * have followed on 2026-11-26.
+ *
+ * So a file that reads those dates through a window pins the clock to a day that is after every
+ * one of them and within twelve weeks of the oldest. It is noon UTC because reviewWindow steps
+ * back in local time and reads the date in UTC; noon keeps it the same calendar day in any zone
+ * a runner is likely to be in. */
+export const FIXTURE_NOW = '2026-09-07T12:00:00Z';
+
+const RealDate = Date;
+
+/* Moves the clock to `at` and lets it run from there. It is not frozen: the job tests poll with
+ * Date.now() deadlines and time a drain, both of which need time to pass. Only `new Date()` and
+ * Date.now() are shifted, so a date built from a value or parsed from a string is unchanged, and
+ * timers keep real time, as in fake-clock.mjs. */
+export function pinClock(at = FIXTURE_NOW) {
+  const offset = RealDate.parse(at) - RealDate.now();
+  function PinnedDate(...args) {
+    if (!new.target) return new RealDate(RealDate.now() + offset).toString();
+    return args.length ? new RealDate(...args) : new RealDate(RealDate.now() + offset);
+  }
+  // Every Date is still a real one, so instanceof holds and Date.parse/Date.UTC come through.
+  PinnedDate.prototype = RealDate.prototype;
+  Object.setPrototypeOf(PinnedDate, RealDate);
+  PinnedDate.now = () => RealDate.now() + offset;
+  globalThis.Date = PinnedDate;
+}
+
+/** A profile that has consented and has some history — the usual starting point. Its dates are
+ *  fixed, so a test that reads them through a review window or the cohort calls pinClock(). */
 export function sampleState(over = {}) {
   return {
     unit: 'kg', lang: 'en', effort: 'rpe', targetW: 80,

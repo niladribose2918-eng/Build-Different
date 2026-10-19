@@ -7,9 +7,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { tempData, sampleState } from './helpers.mjs';
+import { tempData, pinClock, sampleState } from './helpers.mjs';
 
 tempData();
+pinClock();
 const payload = await import('../coach/core/payload.js');
 
 const HUGE = 'x'.repeat(200_000);

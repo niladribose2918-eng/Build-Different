@@ -4,9 +4,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
-import { tempData } from './helpers.mjs';
+import { tempData, pinClock } from './helpers.mjs';
 
 tempData();
+pinClock();
 const cfg = await import('../coach/config.js');
 const { coachRoutes } = await import('../coach/routes.js');
 

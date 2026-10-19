@@ -11,12 +11,13 @@
    React-only syntax, the same reason mcp/'s own tests import frontend/src/lib directly. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { tempData, sampleState } from './helpers.mjs';
+import { tempData, pinClock, sampleState } from './helpers.mjs';
 import { isWarmupRow } from '../../frontend/src/lib/workout-model.js';
 import { readSession as frontendReadSession } from '../../frontend/src/lib/progression.js';
 import { NOTE_MAX as frontendNoteMax } from '../../frontend/src/lib/history.js';
 
 tempData();
+pinClock();
 const payload = await import('../coach/core/payload.js');
 const { handleFor } = await import('../coach/handle.js');
 

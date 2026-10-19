@@ -2,9 +2,10 @@
  * headcount, computed from the state files on disk. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { tempData, writeState, sampleState } from './helpers.mjs';
+import { tempData, pinClock, writeState, sampleState } from './helpers.mjs';
 
 const DIR = tempData();
+pinClock();
 const cfg = await import('../coach/config.js');
 const jobs = await import('../coach/jobs.js');
 const cohort = await import('../coach/cohort.js');
