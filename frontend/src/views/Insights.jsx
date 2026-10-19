@@ -11,6 +11,7 @@ import { recentPrs, prCount } from '../lib/records.js'
 import { tappable } from '../lib/use-sheet-keyboard.js'
 import Icon from '../components/Icon.jsx'
 import { Button, Segmented } from '../components/ui.jsx'
+import BodySection from '../components/BodySection.jsx'
 
 // Insights (Stats → Insights): a week or a month of training against the one before, the few
 // findings worth knowing about it, and the way into the Records board. Everything is worked out
@@ -162,5 +163,7 @@ export default function Insights() {
         <Button size="sm" variant="tinted" trailingIcon="chevronRight" style={{ flexShrink: 0 }} onClick={() => nav('/records')}>{t('Open')}</Button>
       </div>
     </>}
+
+    <BodySection />
   </>
 }

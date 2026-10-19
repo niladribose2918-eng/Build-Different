@@ -2202,3 +2202,10 @@ button.wl-summary{width:100%;padding:0 0 10px;text-align:start;border-radius:var
 .nt-mrow>span{color:var(--label-2)}
 .nt-mrow.nt-mtot{border-top:var(--hair) solid var(--sep);margin-top:4px;padding-top:6px}
 .nt-mrow.nt-mtot>span{color:var(--label)}
+
+/* --- Insights → Body (components/BodySection.jsx) --- */
+.pill-v{flex:none;font-size:12px;font-weight:600;padding:4px 9px;border-radius:999px;color:var(--pill);background:color-mix(in srgb,var(--pill) 16%,transparent);white-space:nowrap}
+.bt-goal{margin-top:12px;padding-top:10px;border-top:var(--hair) solid var(--sep)}
+.bc-read{display:flex;gap:8px;align-items:flex-start;margin-top:10px;font-size:14px;line-height:1.4}
+.bc-read .icn{flex:none;margin-top:2px;color:var(--label-2)}
+.bt-rate{display:flex;gap:4px;align-items:center;margin-top:8px}

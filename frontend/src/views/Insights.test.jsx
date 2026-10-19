@@ -75,6 +75,33 @@ describe('Insights view', () => {
   })
 })
 
+describe('Insights → Body', () => {
+  it('shows the trend, the pace and the goal date for the demo weigh-ins', () => {
+    const host = render(Insights)
+    const card = host.querySelector('[data-weight-trend]')
+    expect(card.textContent).toContain('Trend weight')
+    expect(['gentle', 'steady']).toContain(card.querySelector('[data-verdict]').dataset.verdict)
+    expect(card.querySelector('[data-rate]').textContent).toMatch(/kg a week · [\d.]+% of body weight/)
+    expect(card.querySelector('[data-goal]').textContent).toMatch(/Goal 77 kg/)
+  })
+
+  it('reads the demo measurements as fat lost with muscle kept', () => {
+    const host = render(Insights)
+    const card = host.querySelector('[data-body-comp]')
+    expect(card.textContent).toContain('Fat mass')
+    expect(card.textContent).toContain('Lean mass')
+    expect(card.querySelector('[data-reading="fatLoss"]').textContent).toContain('fat loss with muscle kept')
+    expect(card.querySelector('[data-whtr]').textContent).toContain('Waist-to-height')
+  })
+
+  it('says what to log before there is anything to read', () => {
+    useStore.setState({ S: JSON.parse(JSON.stringify(DEF)) })
+    const host = render(Insights)
+    expect(host.querySelector('[data-weight-trend="waiting"]')).toBeTruthy()
+    expect(host.querySelector('[data-body-comp="empty"]')).toBeTruthy()
+  })
+})
+
 describe('Records view', () => {
   it('lists every trained exercise and narrows by search', () => {
     const host = render(Records)
