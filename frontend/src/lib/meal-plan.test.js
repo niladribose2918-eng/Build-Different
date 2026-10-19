@@ -133,6 +133,13 @@ describe('starter weeks', () => {
     }
   })
 
+  it('average at least 1.4 g of protein per kg at 78 kg in every style, the low end of the usual range for lifters', () => {
+    for (const kind of Object.keys(TEMPLATES)) {
+      const days = Object.values(starterPlan(kind, 2270, food).days).map(m => plannedTotals(m, food).p)
+      expect(days.reduce((a, b) => a + b, 0) / days.length, kind).toBeGreaterThanOrEqual(1.4 * 78)
+    }
+  })
+
   it('scales a single day on its own', () => {
     const day = scaleDay(TEMPLATES.veg.week[0], 2000, food)
     expect(day).toHaveLength(4)
