@@ -65,14 +65,15 @@ const OWN_MERGE = new Set([
   '_ts', '_rev', '_wid', '_wids', '_unstamped', '_prior', 'active', 'unit', 'unitSet', 'resetAt', 'resetIds', 'deleted', 'edited', 'undone', 'routineOrder',
   'workouts', 'routines', 'customEx', 'equipProfiles', 'gymCards', 'bodyweight', 'measurements', 'favEx',
   'exWeights', 'balanceOverrides', 'loadKind', 'plates', 'dbLoad', 'dumbbells', 'dayNotes',
-  'foodLog', 'savedMeals', 'foodDays', 'nutritionCheckins', 'mealPlans', 'mealDays', 'groceryTicks', 'foodsSeen',
+  'foodLog', 'savedMeals', 'foodDays', 'nutritionCheckins', 'mealPlans', 'mealDays', 'groceryTicks', 'foodsSeen', 'goals',
 ]);
 const PER_KEY = new Set(['week', 'dayPlan', 'exNotes', 'barWeights']);
 // The maps whose every entry carries its own edit time (sync-merge.js STAMPED_MAPS): merged per
 // key by the app, so never stamped here as a whole setting. dayNotes is a note per day off;
 // foodLog, savedMeals and foodDays are the Nutrition food log; nutritionCheckins its weekly check-ins;
-// mealPlans, mealDays, groceryTicks and foodsSeen its meal plans, shopping ticks and barcode foods.
-export const STAMPED_MAPS = ['balanceOverrides', 'loadKind', 'plates', 'dbLoad', 'dumbbells', 'dayNotes', 'foodLog', 'savedMeals', 'foodDays', 'nutritionCheckins', 'mealPlans', 'mealDays', 'groceryTicks', 'foodsSeen'];
+// mealPlans, mealDays, groceryTicks and foodsSeen its meal plans, shopping ticks and barcode foods;
+// goals the lift, frequency and measurement goals.
+export const STAMPED_MAPS = ['balanceOverrides', 'loadKind', 'plates', 'dbLoad', 'dumbbells', 'dayNotes', 'foodLog', 'savedMeals', 'foodDays', 'nutritionCheckins', 'mealPlans', 'mealDays', 'groceryTicks', 'foodsSeen', 'goals'];
 const ENTRY_META = new Set(['id', '_ts', '_f', '_u']);
 const ENTRY_LISTS = ['routines', 'customEx', 'equipProfiles', 'gymCards', 'workouts'];
 

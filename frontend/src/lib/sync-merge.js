@@ -86,8 +86,9 @@ const list = v => (Array.isArray(v) ? v : [])
 // Nutrition's food log, saved meals and completed days (lib/food-log.js); nutritionCheckins the
 // weekly check-ins (lib/adaptive-tdee.js); mealPlans, mealDays and groceryTicks the meal plans,
 // their one-off days and the shopping ticks (lib/meal-plan.js, lib/grocery.js); foodsSeen the
-// packaged foods looked up by barcode (lib/barcode-food.js).
-export const STAMPED_MAPS = ['balanceOverrides', 'loadKind', 'plates', 'dbLoad', 'dumbbells', 'dayNotes', 'foodLog', 'savedMeals', 'foodDays', 'nutritionCheckins', 'mealPlans', 'mealDays', 'groceryTicks', 'foodsSeen']
+// packaged foods looked up by barcode (lib/barcode-food.js); goals the lift, frequency and
+// measurement goals (lib/goals.js).
+export const STAMPED_MAPS = ['balanceOverrides', 'loadKind', 'plates', 'dbLoad', 'dumbbells', 'dayNotes', 'foodLog', 'savedMeals', 'foodDays', 'nutritionCheckins', 'mealPlans', 'mealDays', 'groceryTicks', 'foodsSeen', 'goals']
 
 /** The copy with the later `_ts`; on a tie the first argument (callers pass local first). */
 export const newerOf = (a, b) => ((b?._ts || 0) > (a?._ts || 0) ? b : a)
@@ -617,7 +618,7 @@ const OWN_MERGE = new Set([
   '_ts', '_rev', '_wid', '_wids', '_unstamped', '_prior', 'active', 'unit', 'unitSet', 'resetAt', 'resetIds', 'deleted', 'edited', 'undone', 'routineOrder',
   'workouts', 'routines', 'customEx', 'equipProfiles', 'gymCards', 'bodyweight', 'measurements', 'favEx',
   'exWeights', 'balanceOverrides', 'loadKind', 'plates', 'dbLoad', 'dumbbells', 'dayNotes',
-  'foodLog', 'savedMeals', 'foodDays', 'nutritionCheckins', 'mealPlans', 'mealDays', 'groceryTicks', 'foodsSeen',
+  'foodLog', 'savedMeals', 'foodDays', 'nutritionCheckins', 'mealPlans', 'mealDays', 'groceryTicks', 'foodsSeen', 'goals',
 ])
 // Stamped per key instead of whole: one day of the plan, one exercise's note or bar.
 const PER_KEY = new Set(['week', 'dayPlan', 'exNotes', 'barWeights'])

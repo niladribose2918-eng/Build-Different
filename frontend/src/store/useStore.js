@@ -98,6 +98,10 @@ export const DEF = {
   // Meal plans (lib/meal-plan.js), their one-off days, the grocery ticks per week (lib/grocery.js)
   // and packaged foods looked up by barcode (lib/barcode-food.js): stamped maps, like the log.
   mealPlans: {}, mealDays: {}, groceryTicks: {}, foodsSeen: {},
+  // Lift, frequency and measurement goals (lib/goals.js), a stamped map like the ones above. The
+  // body-weight goal is still targetW. Milestones (lib/milestones.js) are worked out from the log
+  // and store nothing; these switches hide them all, or only the strength markers.
+  goals: {}, showMilestones: true, showStrengthMarkers: true,
   // Body measurements (#82): one check-in per day, values in cm whatever the weight unit
   // (lib/measurements.js); merged across devices like weigh-ins (lib/sync-merge.js).
   measurements: [], measurementEnabled: null, customMeasurements: [],
