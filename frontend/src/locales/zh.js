@@ -2243,4 +2243,6 @@ export default {
   'Coach wants you back on the bar.': '教练等你回到杠铃前。',
   'Gentle, for headphones or a quiet room.': '轻柔，适合耳机或安静的房间。',
   "Today's nutrition": '今日营养',
+  'Milestones': '里程碑',
+  'Strength markers': '力量指标',
 }

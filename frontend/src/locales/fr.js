@@ -2243,4 +2243,6 @@ export default {
   'Coach wants you back on the bar.': 'Le coach te veut de retour à la barre.',
   'Gentle, for headphones or a quiet room.': 'Tout doux, pour un casque ou une pièce calme.',
   "Today's nutrition": 'Nutrition du jour',
+  'Milestones': 'Étapes clés',
+  'Strength markers': 'Repères de force',
 }

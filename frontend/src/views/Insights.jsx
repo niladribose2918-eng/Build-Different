@@ -14,6 +14,8 @@ import Icon from '../components/Icon.jsx'
 import { Button, Segmented } from '../components/ui.jsx'
 import BodySection from '../components/BodySection.jsx'
 import NutritionInsights from '../components/NutritionInsights.jsx'
+import { GoalsCard } from '../components/Goals.jsx'
+import { MilestonesCard, ConsistencyCard } from '../components/Milestones.jsx'
 
 // Insights (Stats → Insights): a week or a month of training against the one before, the few
 // findings worth knowing about it, and the way into the Records board. Everything is worked out
@@ -191,6 +193,10 @@ export default function Insights() {
       </div>
     </>}
 
+    {/* Goals, the target streak and milestones read the whole log, not the period picked above. */}
+    <GoalsCard />
+    <ConsistencyCard />
+    <MilestonesCard />
     <NutritionInsights report={report} />
     <BodySection />
 

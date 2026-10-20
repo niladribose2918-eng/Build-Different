@@ -111,6 +111,8 @@ export const SEARCH = [
   { page: 'look', title: 'Body weight', icon: 'scale', tint: 'var(--green)', kw: 'weight card home' },
   { page: 'look', title: 'This week', icon: 'chartLine', tint: 'var(--blue)', kw: 'week summary insights highlight card home progress' },
   { page: 'look', title: "Today's nutrition", icon: 'utensils', tint: 'var(--green)', kw: 'nutrition food diet calories macros protein card home' },
+  { page: 'look', title: 'Milestones', icon: 'medal', tint: 'var(--yellow)', kw: 'milestones achievements badges awards goals streak' },
+  { page: 'look', title: 'Strength markers', icon: 'barbell', tint: 'var(--yellow)', kw: 'strength standards body weight bench squat deadlift press ratio' },
   { page: 'look', title: 'Show connection status', icon: 'cloud', tint: 'var(--blue)', kw: 'sync offline banner bar connection', when: c => !c.demo },
   // Data & backup
   { page: 'data', title: 'Export backup (JSON)', icon: 'share', tint: 'var(--blue)', kw: 'export backup json download save' },

@@ -2243,4 +2243,6 @@ export default {
   'Coach wants you back on the bar.': 'Koç seni bara geri bekliyor.',
   'Gentle, for headphones or a quiet room.': 'Sakin, kulaklık ya da sessiz bir oda için.',
   "Today's nutrition": 'Bugünün beslenmesi',
+  'Milestones': 'Kilometre taşları',
+  'Strength markers': 'Güç eşikleri',
 }

@@ -2243,4 +2243,6 @@ export default {
   'Coach wants you back on the bar.': '코치가 바 앞으로 돌아오래요.',
   'Gentle, for headphones or a quiet room.': '이어폰이나 조용한 곳에 어울려요.',
   "Today's nutrition": '오늘의 영양',
+  'Milestones': '마일스톤',
+  'Strength markers': '근력 기준',
 }

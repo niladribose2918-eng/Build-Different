@@ -2246,4 +2246,6 @@ export default {
   'Coach wants you back on the bar.': 'Az edző visszavár a rúdhoz.',
   'Gentle, for headphones or a quiet room.': 'Halk, fülhallgatóhoz vagy csendes helyre.',
   "Today's nutrition": 'Mai táplálkozás',
+  'Milestones': 'Mérföldkövek',
+  'Strength markers': 'Erőszintek',
 }

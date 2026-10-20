@@ -126,6 +126,19 @@ const monday = date => { const d = new Date(date); d.setDate(d.getDate() - ((d.g
 // A full example profile: 12 weeks of Mon/Wed/Fri sessions on the starter plan, with linear
 // progression, the odd missed session, twice-weekly weigh-ins trending toward the goal, and
 // per-set effort ratings on most (not all) of it.
+// Three goals set the day the history starts, stamped like any goal.
+function demoGoals(workouts, measurements) {
+  const from = workouts[0]?.d || isoOf(new Date())
+  const first = measurements.find(m => m.waist != null)
+  const now = Date.now()
+  const goals = {
+    'demo-bench': { kind: 'lift', ex: '0025', kg: 100, r: 1, from, _ts: now },
+    'demo-freq': { kind: 'freq', n: 3, from, _ts: now },
+  }
+  if (first) goals['demo-waist'] = { kind: 'measure', field: 'waist', target: 80, start: first.waist, from: first.d, _ts: now }
+  return goals
+}
+
 export function buildDemoState() {
   const rnd = rng(20260723)
   // Measurements draw from their own stream. They are logged on a different cadence than the
@@ -276,6 +289,9 @@ export function buildDemoState() {
     nutrition: { ...defaultNutrition(), sex: 'male', birthYear: 1994, heightCm: 178, activity: 'moderate', pace: 0.5, plan: 'demo-plan' },
     mealPlans: { 'demo-plan': { ...demoMealPlan(), _ts: Date.now() } },
     foodLog, foodDays, showNutritionCard: true,
+    // Goals the history can answer (lib/goals.js): a bench single just past the best estimate, the
+    // plan's three sessions a week, and a waist target from the first check-in.
+    goals: demoGoals(workouts, measurements),
     // The demo shows the Home cards a new profile starts with.
     showWeekCard: true,
     // The history is rated, so the demo turns the column on and the stats get a scale to

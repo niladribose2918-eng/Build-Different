@@ -2247,4 +2247,6 @@ export default {
   'Coach wants you back on the bar.': 'Тренер ждёт вас обратно у штанги.',
   'Gentle, for headphones or a quiet room.': 'Тихий, для наушников или спокойного зала.',
   "Today's nutrition": 'Питание сегодня',
+  'Milestones': 'Достижения',
+  'Strength markers': 'Силовые рубежи',
 }

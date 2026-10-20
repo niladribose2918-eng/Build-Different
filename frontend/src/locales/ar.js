@@ -2298,4 +2298,6 @@ export default {
   'Coach wants you back on the bar.': 'المدرب يريدك أن تعود إلى البار.',
   'Gentle, for headphones or a quiet room.': 'هادئ، للسماعات أو لغرفة هادئة.',
   "Today's nutrition": 'تغذية اليوم',
+  'Milestones': 'المعالم',
+  'Strength markers': 'مؤشرات القوة',
 }

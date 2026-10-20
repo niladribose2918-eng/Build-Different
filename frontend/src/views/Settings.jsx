@@ -771,6 +771,16 @@ export default function Settings({ page = null, find = null, via = null }) {
           subtitle={t('Show calories and macros on Home, and open Nutrition from there.')}>
           <Switch checked={!!S.showNutritionCard} onChange={v => update(s => { s.showNutritionCard = v })} />
         </Row>
+        {/* Milestones (lib/milestones.js): the Insights card, the Home line and the finish-screen
+            line all go with this one switch; the strength markers can go on their own. */}
+        <Row icon="medal" iconTint="var(--yellow)" title={t('Milestones')}
+          subtitle={t('Show milestones in Insights, on Home and when you finish a workout.')}>
+          <Switch checked={S.showMilestones !== false} onChange={v => update(s => { s.showMilestones = v })} />
+        </Row>
+        {S.showMilestones !== false && <Row icon="barbell" iconTint="var(--yellow)" title={t('Strength markers')}
+          subtitle={t('Bench, squat, deadlift and overhead press against your body weight.')}>
+          <Switch checked={S.showStrengthMarkers !== false} onChange={v => update(s => { s.showStrengthMarkers = v })} />
+        </Row>}
         {/* The bar at the top that says the app is offline, kept local, or not synced (#369, #330).
             Here and not under Server & sync, which a phone kept local never shows. Switching it on
             also brings back the no-server line its × hid (#454). */}

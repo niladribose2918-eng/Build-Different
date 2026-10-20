@@ -2243,4 +2243,6 @@ export default {
   'Coach wants you back on the bar.': 'कोच आपको बार पर वापस चाहते हैं।',
   'Gentle, for headphones or a quiet room.': 'धीमी, हेडफ़ोन या शांत कमरे के लिए।',
   "Today's nutrition": 'आज का पोषण',
+  'Milestones': 'मील के पत्थर',
+  'Strength markers': 'ताकत के पैमाने',
 }
