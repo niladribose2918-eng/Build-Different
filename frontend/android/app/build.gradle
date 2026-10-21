@@ -9,6 +9,11 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 26
         versionName "1.4.1"
+        // A personal build (.github/workflows/android-apk.yml) passes its own id and a rising
+        // version code, so it installs beside the official app and each build updates the last.
+        // The literal lines above stay as they are: release CI reads the version code from them.
+        if (project.hasProperty('appId')) applicationId(project.property('appId') as String)
+        if (project.hasProperty('appVersionCode')) versionCode((project.property('appVersionCode') as String).toInteger())
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

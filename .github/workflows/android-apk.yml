@@ -1,0 +1,99 @@
+# The personal Android app: the phone flavor of openGym (VITE_MOBILE), which keeps every bit of
+# data on the phone and talks to no server, built into an installable APK on every push to main
+# (and on demand from the Actions tab).
+#
+# The newest build is always on the "android-latest" release of this repository, so the phone
+# can download it straight from the Releases page; each run's APK is also kept as an artifact.
+#
+# Signed with the same key every time: Android only installs an update over the app (keeping its
+# data) when the key matches. The key sits in frontend/android/app/personal-signing.tar.enc,
+# encrypted (AES-256, PBKDF2), and is opened here with the APK_KEY_PASSPHRASE repository secret
+# (Settings → Secrets and variables → Actions). Lose the passphrase and no later build can update
+# the installed app; keep it with your passwords.
+name: Android APK
+
+on:
+  push:
+    branches: [main, claude/beautiful-lamport-ivn9sk]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  APP_ID: io.github.niladribose2918.builddifferent
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Build the phone app's web part and copy it into the Android shell
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build:mobile
+
+      - name: Build the APK
+        working-directory: frontend/android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleRelease -PappId="$APP_ID" -PappVersionCode="$((1000 + GITHUB_RUN_NUMBER))"
+
+      - name: Sign it
+        env:
+          APK_KEY_PASSPHRASE: ${{ secrets.APK_KEY_PASSPHRASE }}
+        run: |
+          set -eu
+          if [ -z "${APK_KEY_PASSPHRASE:-}" ]; then
+            echo "::error::Add the APK_KEY_PASSPHRASE secret (Settings → Secrets and variables → Actions), then run this workflow again."
+            exit 1
+          fi
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in frontend/android/app/personal-signing.tar.enc \
+            -pass env:APK_KEY_PASSPHRASE | tar -x -C frontend/android/app
+          . frontend/android/app/personal-keystore.properties
+          BT="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)"
+          UNSIGNED=frontend/android/app/build/outputs/apk/release/app-release-unsigned.apk
+          "$BT/zipalign" -f -p 4 "$UNSIGNED" aligned.apk
+          "$BT/apksigner" sign --ks frontend/android/app/personal.keystore \
+            --ks-pass "pass:$storePassword" --ks-key-alias "$keyAlias" --key-pass "pass:$keyPassword" \
+            --out openGym.apk aligned.apk
+          "$BT/apksigner" verify --print-certs openGym.apk
+          sha256sum openGym.apk > openGym.apk.sha256
+          cat openGym.apk.sha256
+          rm -f frontend/android/app/personal.keystore frontend/android/app/personal-keystore.properties
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openGym-apk-${{ github.run_number }}
+          path: |
+            openGym.apk
+            openGym.apk.sha256
+
+      - name: Put it on the android-latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          NOTES="Build ${GITHUB_RUN_NUMBER} from ${GITHUB_SHA::7} on ${GITHUB_REF_NAME}. Install openGym.apk on the phone; a new build installs over the old one and keeps your data."
+          gh release delete android-latest --yes --cleanup-tag 2>/dev/null || true
+          gh release create android-latest openGym.apk openGym.apk.sha256 \
+            --title "openGym for Android (latest build)" --notes "$NOTES" --target "$GITHUB_SHA" --prerelease
