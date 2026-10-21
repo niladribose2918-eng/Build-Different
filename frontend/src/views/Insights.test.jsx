@@ -100,7 +100,7 @@ describe('Insights → Body', () => {
     expect(card.textContent).toContain('Trend weight')
     expect(['gentle', 'steady']).toContain(card.querySelector('[data-verdict]').dataset.verdict)
     expect(card.querySelector('[data-rate]').textContent).toMatch(/kg a week · [\d.]+% of body weight/)
-    expect(card.querySelector('[data-goal]').textContent).toMatch(/Goal 77 kg/)
+    expect(card.querySelector('[data-trend-goal]').textContent).toMatch(/Goal 77 kg/)
   })
 
   it('reads the demo measurements as fat lost with muscle kept', () => {

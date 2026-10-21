@@ -22,6 +22,8 @@ const exName = id => exerciseNameText(EXIDX[id] || exOr(id))
 const unitOf = S => (S.unit === 'lb' ? 'lb' : 'kg')
 // Weights at the precision a bar can be loaded to, so 225 lb kept in kg never reads 224.9.
 const plate = (w, unit) => (unit === 'lb' ? Math.round(w * 2) / 2 : Math.round(w * 4) / 4)
+/** The first loadable weight above `w`: the next 2.5 kg, or 5 lb. */
+export const nextStep = (w, unit) => { const step = unit === 'lb' ? 5 : 2.5; return (Math.floor(w / step + 1e-9) + 1) * step }
 const ICON = { lift: ['dumbbell', 'var(--blue)', '#fff'], freq: ['calendar', 'var(--green)', '#000'], measure: ['ruler', 'var(--indigo)', '#fff'], weight: ['scale', 'var(--yellow)', '#000'] }
 
 /** A measurement's name as shown: the built-in ones translated, your own as you typed it. */
@@ -134,7 +136,8 @@ function GoalEdit({ close, goal, start: startKind }) {
     const picker = exercisePicker(x => {
       if (!liftGoalOk(x)) { toast(t('An assisted exercise has no weight to aim for. Pick a loaded one.')); return }
       setEx(x.id)
-      if (w == null) { const b = best1RM(S, x.id); if (b) setW(plate(b.est, unit)) }
+      // Start one loading step above today's best estimate: a goal you already hold is no goal.
+      if (w == null) { const b = best1RM(S, x.id); if (b) setW(nextStep(b.est, unit)) }
       picker.close()
     }, { title: t('Pick an exercise') })
   }

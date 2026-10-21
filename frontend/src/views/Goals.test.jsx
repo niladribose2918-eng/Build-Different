@@ -10,6 +10,7 @@ import FinishContext from '../components/FinishContext.jsx'
 import FirstMonth from '../components/FirstMonth.jsx'
 import { buildDemoState } from '../lib/demoSeed.js'
 import { goalsOf } from '../lib/goals.js'
+import { nextStep } from '../components/Goals.jsx'
 import { todayISO } from '../lib/format.js'
 
 const navSpy = vi.fn()
@@ -82,6 +83,14 @@ describe('Goals in Insights', () => {
     const edit = topSheet() // mounted outside act: inside one, its render waits for the act to end
     act(() => button(edit, 'Remove goal').click())
     expect(goalsOf(S()).some(g => g.kind === 'freq')).toBe(false)
+  })
+})
+
+describe('the lift goal editor', () => {
+  it('suggests the next loadable weight above the best estimate', () => {
+    expect(nextStep(110.8, 'kg')).toBe(112.5)
+    expect(nextStep(110, 'kg')).toBe(112.5)
+    expect(nextStep(231, 'lb')).toBe(235)
   })
 })
 

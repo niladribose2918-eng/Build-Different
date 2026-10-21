@@ -84,10 +84,16 @@ export function groceryList(S, { from = todayISO(), days = DAYS, food, recipes =
 }
 
 /** An item's amount as the list reads it: "6", "350 g", "450 g cooked weight". */
+// Below this a weight reads as "a little" on the list.
+export const SMALL_G = 25
+
 export function amountText(item, tr = fill) {
   if (item.pieces) return String(item.pieces)
   const g = item.g >= 1000 ? (Math.round(item.g / 100) / 10) + ' kg' : item.g + ' g'
-  return item.cooked ? tr('{0} cooked weight', g) : g
+  if (item.cooked) return tr('{0} cooked weight', g)
+  // A few grams of a vegetable inside a dish's recipe is not something a shop sells: it reads as a
+  // little of it, with the amount kept for the cook.
+  return item.g < SMALL_G ? tr('a little, {0}', g) : g
 }
 
 /** The ticked items of the list starting `from`. */

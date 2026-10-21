@@ -39,6 +39,8 @@ describe('grocery list', () => {
     const list = groceryList(profile(plan), opts)
     expect(amountText(find(list, 'Egg, hard-boiled'))).toBe('21')
     expect(amountText(find(list, 'Banana'))).toBe('7')
+    expect(amountText({ g: 9 })).toBe('a little, 9 g')
+    expect(amountText({ g: 25 })).toBe('25 g')
     expect(list.flatMap(s => s.items).some(i => /Bar|Tea/.test(i.name))).toBe(false)
     // chai brings its milk and sugar, not tea leaves by the gram
     expect(find(list, 'Milk')).toBeTruthy()

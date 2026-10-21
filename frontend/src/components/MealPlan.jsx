@@ -262,7 +262,7 @@ export default function MealPlan() {
         <button className="iconbtn" aria-label={t('New meal plan')} onClick={newPlan}><Icon name="plus" /></button>
       </div>
       <div className="mp-opts">
-        {plan.id === def ? <span className="small" data-plan-default><Icon name="checkCircle" style={{ color: 'var(--green)' }} /> {t('Default plan')}</span>
+        {plan.id === def ? <span className="small" data-plan-default style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="checkCircle" style={{ color: 'var(--green)' }} />{t('Default plan')}</span>
           : <Button size="sm" variant="tinted" onClick={() => update(s => { s.nutrition = { ...s.nutrition, plan: plan.id } })}>{t('Use by default')}</Button>}
         <Segmented className="seg-inline" value={plan.mode} onChange={mode => update(s => { s.mealPlans = withPlan(s.mealPlans, { ...plan, mode }, plan.id) })}
           options={[{ value: 'week', label: t('Each weekday') }, { value: 'same', label: t('Same every day') }]} />

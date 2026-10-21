@@ -67,7 +67,7 @@ function WeightTrendCard({ S }) {
         series={[{ points: raw, color: 'var(--label-4)' }, { points: smooth, color: 'var(--acc)' }]} />
     </div>
 
-    {g && <div className="bt-goal" data-goal>
+    {g && <div className="bt-goal" data-trend-goal>
       <div className="row between small"><span>{t('Goal {0}', fmtNum(g.target) + ' ' + unit)}</span>
         <span className="dim">{t('{0} of {1} done', fmtNum(Math.max(0, g.done)), fmtNum(g.toGo) + ' ' + unit)}</span></div>
       <div className="nt-bar-t" style={{ marginTop: 5 }}><span style={{ width: Math.round(g.progress * 100) + '%', background: 'var(--yellow)' }} /></div>
