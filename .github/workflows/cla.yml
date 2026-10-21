@@ -17,6 +17,9 @@ permissions:
 
 jobs:
   cla:
+    # The CLA is upstream openGym's; a fork has neither its signature branch nor its allowlist,
+    # so the check could only ever fail there (the same guard as mirror.yml).
+    if: github.repository == 'DuarteSantos8/openGym'
     runs-on: ubuntu-latest
     steps:
       # Comments on plain issues (the pinned CLA issue #554) are not pull requests: the action
