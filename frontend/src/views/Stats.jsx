@@ -673,6 +673,11 @@ export default function Stats() {
           : t('Waist, arms, body fat and anything else you measure, each with its own curve.')}</div></div>
       <Button size="sm" variant="tinted" trailingIcon="chevronRight" style={{ flexShrink: 0 }} onClick={() => nav('/measurements')}>{t('Open')}</Button>
     </div>
+    {workouts.length > 0 && <div className="card row between" style={{ alignItems: 'center', gap: 12 }} data-insights-link>
+      <div style={{ minWidth: 0 }}><h2 style={{ margin: 0 }}>{t('Insights')}</h2>
+        <div className="muted small" style={{ marginTop: 4 }}>{t('Your week and month in review, and every record you have set.')}</div></div>
+      <Button size="sm" variant="tinted" trailingIcon="chevronRight" style={{ flexShrink: 0 }} onClick={() => nav('/insights')}>{t('Open')}</Button>
+    </div>}
     {(hasEffort(S) || hasEstimableEffort(S)) && <EffortCard S={S} />}
 
     <div className="cols">

@@ -4,6 +4,9 @@ import { useStore } from '../store/useStore.js'
 import { effectiveRoutines, effectiveRoutineIds, nextTrainingDay, streakWeeks, lastBW, setsDoneActive } from '../lib/history.js'
 import { fmtNum, fmtDate, todayISO, isoOf, weekStartOf, weekDayOffset, DAYS, DAYN } from '../lib/format.js'
 import { t, tn, dateLocale } from '../lib/i18n.js'
+import NutritionCard from '../components/NutritionCard.jsx'
+import WeekCard from '../components/WeekCard.jsx'
+import FirstMonth from '../components/FirstMonth.jsx'
 import { bwSheet, goalSheet, dayOverrideSheet, calendarSheet, startFlow, starterPlanSheet, bwDeltaColor, weighInsSheet } from '../sheets.jsx'
 import LineChart from '../components/LineChart.jsx'
 import Icon from '../components/Icon.jsx'
@@ -175,6 +178,9 @@ export default function Home() {
       </div>
     )}
 
+    {/* A new lifter's checklist, once there is a plan: it never stands beside the Welcome card. */}
+    <FirstMonth />
+
     {!S.routines.length && !S.active && (
       <div className="card">
         <div className="row" style={{ gap: 10, marginBottom: 6 }}>
@@ -235,5 +241,8 @@ export default function Home() {
         <Icon name="calendar" className="chev" style={{ fontSize: 20 }} />
       </div>
     </div>
+
+    <WeekCard />
+    <NutritionCard />
   </div>
 }

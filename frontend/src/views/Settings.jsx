@@ -761,6 +761,26 @@ export default function Settings({ page = null, find = null, via = null }) {
           subtitle={t('Show the body weight card on Home.')}>
           <Switch checked={S.showWeightCard !== false} onChange={v => update(s => { s.showWeightCard = v })} />
         </Row>
+        {/* The week at a glance: sessions, last week, the top highlight, the weight trend. */}
+        <Row icon="chartLine" iconTint="var(--blue)" title={t('This week')}
+          subtitle={t('Show the week at a glance on Home, with the top highlight from Insights.')}>
+          <Switch checked={!!S.showWeekCard} onChange={v => update(s => { s.showWeekCard = v })} />
+        </Row>
+        {/* The way into Nutrition: a setup offer until it is set up, then the day's numbers. */}
+        <Row icon="utensils" iconTint="var(--green)" title={t("Today's nutrition")}
+          subtitle={t('Show calories and macros on Home, and open Nutrition from there.')}>
+          <Switch checked={!!S.showNutritionCard} onChange={v => update(s => { s.showNutritionCard = v })} />
+        </Row>
+        {/* Milestones (lib/milestones.js): the Insights card, the Home line and the finish-screen
+            line all go with this one switch; the strength markers can go on their own. */}
+        <Row icon="medal" iconTint="var(--yellow)" title={t('Milestones')}
+          subtitle={t('Show milestones in Insights, on Home and when you finish a workout.')}>
+          <Switch checked={S.showMilestones !== false} onChange={v => update(s => { s.showMilestones = v })} />
+        </Row>
+        {S.showMilestones !== false && <Row icon="barbell" iconTint="var(--yellow)" title={t('Strength markers')}
+          subtitle={t('Bench, squat, deadlift and overhead press against your body weight.')}>
+          <Switch checked={S.showStrengthMarkers !== false} onChange={v => update(s => { s.showStrengthMarkers = v })} />
+        </Row>}
         {/* The bar at the top that says the app is offline, kept local, or not synced (#369, #330).
             Here and not under Server & sync, which a phone kept local never shows. Switching it on
             also brings back the no-server line its × hid (#454). */}
